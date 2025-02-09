@@ -1,3 +1,5 @@
+import 'package:cakeeflutter/app/page/login/register.dart';
+import 'package:cakeeflutter/trangchu.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -25,12 +27,32 @@ class LoginScreen extends StatelessWidget {
               obscureText: true,
             ),
             SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                // Handle login logic
-              },
-              child: Text('Login'),
+            Row(
+              children: <Widget>[
+                ElevatedButton(
+                  onPressed: () {
+                  // Handle login logic
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                    );
+                  },
+                  child: Text('Login'),
+                ),
+                SizedBox(width: 20.0),
+                ElevatedButton(
+                  onPressed: () {
+                  // Handle register logic
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RegisterScreen()),
+                    );
+                  },
+                  child: Text('Register'),
+                ),
+              ],
             ),
+            
           ],
         ),
       ),
