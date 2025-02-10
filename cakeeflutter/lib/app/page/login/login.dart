@@ -1,5 +1,5 @@
-import 'package:cakeeflutter/app/page/login/register.dart';
-import 'package:cakeeflutter/trangchu.dart';
+import 'package:cakeeflutter/app/page/login/register_user.dart';
+import 'package:cakeeflutter/app/page/UserUI/trangchu.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -45,7 +45,7 @@ class LoginScreen extends StatelessWidget {
                   // Handle register logic
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => RegisterScreen()),
+                      MaterialPageRoute(builder: (context) => RegisterUserScreen()),
                     );
                   },
                   child: Text('Register'),
