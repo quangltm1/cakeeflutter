@@ -1,9 +1,9 @@
-import 'package:cakeeflutter/app/page/login/login.dart';
+import 'package:cakeeflutter/app/screen/login.dart';
 import 'package:flutter/material.dart';
 // Make sure to import the LoginScreen
 
 class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({Key? key}) : super(key: key);
+  const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,12 +37,12 @@ class WelcomeScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFFFFD900)),
               onPressed: () {
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => LoginScreen()),
               );
               },
-              child: Text('Tiếp tục', style: TextStyle(color: Color(0xFF000000))),
+              child: Text('Bắt đầu', style: TextStyle(color: Color(0xFF000000))),
             ),
           ],
         ),

@@ -1,6 +1,6 @@
-import 'package:cakeeflutter/app/page/login/welcom.dart';
+import 'package:cakeeflutter/app/screen/login.dart';
+import 'package:cakeeflutter/app/screen/welcom_screen.dart';
 import 'package:flutter/material.dart';
-
 
 void main() {
   runApp(const MyApp());
@@ -19,8 +19,9 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: WelcomeScreen(),
+      routes: {
+        '/login': (context) => LoginScreen(), // Define the login screen route
+      },
     );
   }
 }
-
-
