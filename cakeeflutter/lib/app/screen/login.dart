@@ -1,9 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:cakeeflutter/app/core/api_service.dart';
 import 'package:cakeeflutter/app/core/shared_prefs.dart';
-import 'package:cakeeflutter/app/screen/admin/dashboard_admin.dart';
-import 'package:cakeeflutter/app/screen/user/dashboard_user.dart';
+import 'package:cakeeflutter/app/widgets/dashboard_admin.dart';
+import 'package:cakeeflutter/app/widgets/dashboard_user.dart';
 import 'package:cakeeflutter/app/screen/register_user.dart';
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,171 +14,149 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  TextEditingController accountController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  final TextEditingController accountController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
+  bool isPasswordVisible = false; // Thêm trạng thái hiển thị mật khẩu
 
-  login() async {
-  setState(() {
-    isLoading = true;
-  });
+  Future<void> login() async {
+  setState(() => isLoading = true);
 
-  String? token = await APIRepository().login(
-    accountController.text,
-    passwordController.text,
-  );
+  try {
+    String? token = await APIRepository().login(
+      accountController.text,
+      passwordController.text,
+    );
 
-  if (token != null) {
-    var user = await APIRepository().current(token);
-    if (user != null) {
-      await saveUser(user);
+    if (token != null) {
+      var user = await APIRepository().current(token);
+      if (user != null) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+        await prefs.setString('userId', user.id.toString()); // ⚡ Lưu userId
+        await prefs.setInt('role', int.tryParse(user.role.toString()) ?? 0);
 
-      // Debug kiểm tra giá trị role nhận được
-      print("🔍 Giá trị role từ API: ${user.role} (kiểu dữ liệu: ${user.role.runtimeType})");
+        print("✅ Lưu vào SharedPreferences: UserID = ${user.id}, Token = $token");
 
-      // Xóa dữ liệu cũ trước khi lưu mới
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-
-      // Ép kiểu role thành int trước khi lưu
-      int userRole = int.tryParse(user.role.toString()) ?? 0;
-
-      // Lưu token & role mới
-      await prefs.setString('token', token);
-      await prefs.setInt('role', userRole);
-
-      print("✅ Đăng nhập thành công! Role mới đã lưu: $userRole");
-
-      // Điều hướng theo role
-      if (userRole == 1) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => user.role == 1
+                ? const AdminHomeScreen()
+                : const UserHomeScreen(),
+          ),
         );
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const UserHomeScreen()),
-        );
+        showError("Không thể lấy thông tin người dùng");
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi khi lấy thông tin người dùng")),
-      );
+      showError("Sai tên đăng nhập hoặc mật khẩu");
     }
-  } else {
+  } catch (e) {
+    showError("Đã xảy ra lỗi, vui lòng thử lại");
+  }
+
+  setState(() => isLoading = false);
+}
+
+
+
+
+  void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Đăng nhập thất bại!")),
+      SnackBar(content: Text(message)),
     );
   }
-
-  setState(() {
-    isLoading = false;
-  });
-}
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  autoLogin() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
-  int? savedRole = prefs.getInt('role'); // Lấy role từ SharedPreferences
-
-  print("🔍 AutoLogin - Token: $token, Role từ SharedPreferences: $savedRole");
-
-  if (token != null && token.isNotEmpty) {
-    var user = await APIRepository().current(token);
-
-    if (user != null) {
-      // Debug giá trị role từ API
-      print("✅ AutoLogin - Role từ API: ${user.role} (kiểu dữ liệu: ${user.role.runtimeType})");
-
-      int userRole = int.tryParse(user.role.toString()) ?? 0;
-      await prefs.setInt('role', userRole);
-
-      print("✅ AutoLogin - Role sau khi cập nhật: $userRole");
-
-      if (userRole == 1) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const UserHomeScreen()),
-        );
-      }
-    } else {
-      await prefs.clear();
-      print("❌ AutoLogin failed, removed token.");
-    }
-  }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFFFFD900),
-        title: Text('Đăng nhập'),
-        automaticallyImplyLeading: false,
-      ),
-      backgroundColor: Color(0xFFFFFFFF),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          children: <Widget>[
-            Image.asset('assets/images/logo.png'),
-            SizedBox(height: 20),
-            TextField(
-              controller: accountController,
-              decoration: InputDecoration(
-                labelText: 'Nhập tài khoản',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                ),
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/logo.png', height: 120),
+            const SizedBox(height: 20),
+            const Text(
+              "Đăng nhập",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
             ),
-            SizedBox(height: 16.0),
-            TextField(
-              controller: passwordController,
-              decoration: InputDecoration(
-                labelText: 'Nhập mật khẩu',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                ),
+            const SizedBox(height: 20),
+            buildTextField("Tên đăng nhập", accountController),
+            const SizedBox(height: 10),
+            buildTextField("Mật khẩu", passwordController, obscureText: true),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFD900),
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
-              obscureText: true,
+              onPressed: isLoading ? null : login,
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Colors.black)
+                  : const Text(
+                      "Đăng nhập",
+                      style: TextStyle(color: Colors.black),
+                    ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 20),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFFFD900)),
-                  onPressed: isLoading ? null : login,
-                  child: isLoading
-                      ? CircularProgressIndicator(color: Colors.black)
-                      : Text('Đăng nhập', style: TextStyle(color: Colors.black)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFFFD900)),
-                  onPressed: () {
-                    Navigator.push(
+                const Text("Chưa có tài khoản?"),
+                TextButton(
+                  onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => RegisterUserScreen()),
-                    );
-                  },
-                  child: Text('Đăng ký', style: TextStyle(color: Colors.black)),
+                      MaterialPageRoute(
+                          builder: (context) => const RegisterUserScreen())),
+                  child: const Text(
+                    "Đăng ký",
+                    style: TextStyle(color: const Color(0xFFFFD900)),
+                  ),
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildTextField(String label, TextEditingController controller,
+      {bool obscureText = false}) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText && !isPasswordVisible,
+      decoration: InputDecoration(
+        hintText: label,
+        hintStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: Colors.grey.shade200,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: obscureText
+            ? IconButton(
+                icon: Icon(
+                  isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    isPasswordVisible = !isPasswordVisible;
+                  });
+                },
+              )
+            : null,
       ),
     );
   }

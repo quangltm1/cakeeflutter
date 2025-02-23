@@ -9,11 +9,13 @@ Future<bool> saveUser(User objUser) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String strUser = jsonEncode(objUser);
     prefs.setString('user', strUser);
+    prefs.setString('userId', objUser.id.toString()); // ⚡ Lưu userId riêng
     return true;
   } catch (e) {
     return false;
   }
 }
+
 
 Future<bool> logOut(BuildContext context) async {
   try {

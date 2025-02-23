@@ -1,25 +1,25 @@
-import 'package:cakeeflutter/app/screen/admin/caidat_admin.dart';
-import 'package:cakeeflutter/app/screen/admin/donhang_admin.dart';
-import 'package:cakeeflutter/app/screen/admin/thuchi_admin.dart';
-import 'package:cakeeflutter/app/screen/admin/trangchu_admin.dart';
+import 'package:cakeeflutter/app/screen/user/donhang_user.dart';
+import 'package:cakeeflutter/app/screen/user/giohang_user.dart';
+import 'package:cakeeflutter/app/screen/user/trangchu_user.dart';
 import 'package:flutter/material.dart';
+import '../screen/user/caidat_user.dart';
 
-class AdminHomeScreen extends StatefulWidget {
-  const AdminHomeScreen({super.key});
+class UserHomeScreen extends StatefulWidget {
+  const UserHomeScreen({super.key});
 
   @override
-  _AdminHomeScreen createState() => _AdminHomeScreen();
+  _UserHomeScreenState createState() => _UserHomeScreenState();
 }
 
-class _AdminHomeScreen extends State<AdminHomeScreen> {
+class _UserHomeScreenState extends State<UserHomeScreen> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
   static final List<Widget> _widgetOptions = <Widget>[
-    TrangchuAdmin(),
-    DonHangAdmin(),
-    ThuChiAdmin(),
-    CaiDatAdminScreen(), // Updated to use CaiDatAdminScreen
+    TrangChuUserPage(),
+    DonHangPage(),
+    GioHangPage(),
+    CaiDatUserScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -32,6 +32,7 @@ class _AdminHomeScreen extends State<AdminHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -48,12 +49,12 @@ class _AdminHomeScreen extends State<AdminHomeScreen> {
             label: 'Trang Chu',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
+            icon: Icon(Icons.shopping_bag),
             label: 'Don Hang',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'Thu Chi',
+            icon: Icon(Icons.shopping_cart),
+            label: 'Gio Hang',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
@@ -61,8 +62,14 @@ class _AdminHomeScreen extends State<AdminHomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.deepPurple,
+        selectedItemColor: const Color.fromARGB(255, 87, 221, 91),
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
         onTap: _onItemTapped,
+        backgroundColor: Color(0xFFFBFBFB),
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
+        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal),
       ),
     );
   }

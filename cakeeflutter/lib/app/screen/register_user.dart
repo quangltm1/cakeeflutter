@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cakeeflutter/app/core/api_service.dart';
-import 'package:cakeeflutter/app/model/register.dart';
+import 'package:cakeeflutter/app/screen/login.dart';
 
 class RegisterUserScreen extends StatefulWidget {
   const RegisterUserScreen({super.key});
@@ -17,131 +16,137 @@ class _RegisterScreenState extends State<RegisterUserScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   bool isLoading = false;
-  bool isSeller = false; // Thêm biến kiểm tra nhà bán hàng
+  bool isSeller = false;
 
-  void _register() async {
+  void _register() {
     if (_formKey.currentState!.validate()) {
       setState(() {
         isLoading = true;
       });
-
-      final user = Signup(
-        userName: _emailController.text,
-        password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text,
-        fullName: _fullNameController.text,
-        phoneNumber: _phoneController.text,
-      );
-
-      final response = await APIRepository().register(user, isSeller); // Gọi API theo role
-
-      setState(() {
-        isLoading = false;
-      });
-
-      if (response == "ok") {
+      // Simulate registration process
+      Future.delayed(Duration(seconds: 2), () {
+        setState(() {
+          isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Đăng ký thành công!')),
         );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi đăng ký: $response')),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
-      }
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Đăng ký'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
           child: Column(
-            children: <Widget>[
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Tên đăng nhập'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập tên đăng nhập';
-                  }
-                  return null;
-                },
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 50),
+              
+              /// ✅ Thêm nút "Quay lại"
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: Colors.black, size: 28),
+                  onPressed: () {
+                    Navigator.pop(context); // ✅ Quay lại màn hình trước đó
+                  },
+                ),
               ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Mật khẩu'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập mật khẩu';
-                  }
-                  if (value.length < 6) {
-                    return 'Mật khẩu phải có ít nhất 6 ký tự';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(labelText: 'Xác nhận mật khẩu'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng xác nhận mật khẩu';
-                  }
-                  if (value != _passwordController.text) {
-                    return 'Mật khẩu không khớp';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _fullNameController,
-                decoration: InputDecoration(labelText: 'Họ và tên'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập họ và tên';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _phoneController,
-                decoration: InputDecoration(labelText: 'Số điện thoại'),
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập số điện thoại';
-                  }
-                  return null;
-                },
-              ),
-              CheckboxListTile(
-                title: Text('Đăng ký cho nhà bán hàng'),
-                value: isSeller,
-                onChanged: (bool? value) {
-                  setState(() {
-                    isSeller = value ?? false;
-                  });
-                },
+
+              Image.asset('assets/images/logo.png', height: 100),
+              SizedBox(height: 20),
+              Text(
+                "Tạo tài khoản",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: isLoading ? null : _register,
-                child: isLoading
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text('Đăng ký'),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildTextField(_emailController, "Tên đăng nhập", Icons.person),
+                    _buildTextField(_fullNameController, "Tên đầy đủ", Icons.account_circle_sharp),
+                    _buildTextField(_phoneController, "Số điện thoại", Icons.phone),
+                    _buildTextField(_passwordController, "Mật khẩu", Icons.lock, obscure: true),
+                    _buildTextField(_confirmPasswordController, "Xác nhận mật khẩu", Icons.lock, obscure: true),
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                      GestureDetector(
+                        onTap: () {
+                        setState(() {
+                          isSeller = !isSeller;
+                        });
+                        },
+                        child: Row(
+                        children: [
+                          Checkbox(
+                          value: isSeller,
+                          onChanged: (bool? value) {
+                            setState(() {
+                            isSeller = value ?? false;
+                            });
+                          },
+                          ),
+                          Text("Đăng ký cho nhà bán hàng"),
+                        ],
+                        ),
+                      ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : _register,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFFFD900),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 50),
+                      ),
+                      child: isLoading
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : Text("Đăng ký", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String hintText, IconData icon, {bool obscure = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscure,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: Colors.grey),
+          hintText: hintText,
+          filled: true,
+          fillColor: Colors.grey[200],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Vui lòng nhập $hintText';
+          }
+          return null;
+        },
       ),
     );
   }

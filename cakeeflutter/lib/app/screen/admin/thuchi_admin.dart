@@ -5,8 +5,11 @@ class ThuChiAdmin extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Thu Chi Admin'),
+        title: Text('Thu Chi', style: TextStyle(), textAlign: TextAlign.center),
+        centerTitle: true,
+        backgroundColor: Color(0xFFFFFFFF),
       ),
+      backgroundColor: Color(0xFFFFFFFF),
       body: Center(
         child: Text('Welcome to Thu Chi Admin Screen'),
       ),

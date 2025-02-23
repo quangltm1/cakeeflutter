@@ -2,24 +2,24 @@ class User {
   final String id;
   final String userName;
   final String fullName;
-  final String phoneNumber;
-  final int role;
+  final String phone;
+  final int role; // Đảm bảo kiểu dữ liệu là int
 
   User({
     required this.id,
     required this.userName,
     required this.fullName,
-    required this.phoneNumber,
+    required this.phone,
     required this.role,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['Id'] ?? '', // Kiểm tra API trả về key nào
-      userName: json['UserName'] ?? '',
-      fullName: json['FullName'] ?? '',
-      phoneNumber: json['Phone'] ?? '',
-      role: int.tryParse(json['Role'].toString()) ?? 0,
+      id: json['id'],
+      userName: json['userName'],
+      fullName: json['fullName'],
+      phone: json['phone'],
+      role: json['role'] is int ? json['role'] : int.tryParse(json['role'].toString()) ?? 0, // Chuyển role về int
     );
   }
 }
