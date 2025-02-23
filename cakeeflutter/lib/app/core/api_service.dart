@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:cakeeflutter/app/model/cake.dart';
 import 'package:cakeeflutter/app/model/register.dart';
 import 'package:cakeeflutter/app/model/user.dart';
@@ -135,123 +134,132 @@ class APIRepository {
   }
 
   Future<List<Cake>> fetchCakesByUserId(String userId) async {
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
 
-    if (token == null) {
-      throw Exception('❌ Token không tồn tại. Vui lòng đăng nhập lại.');
+      if (token == null) {
+        throw Exception('❌ Token không tồn tại. Vui lòng đăng nhập lại.');
+      }
+
+      print("📌 Gửi yêu cầu lấy danh sách bánh cho UserID: $userId");
+
+      String bearerToken = "Bearer $token";
+      Response res = await api.sendRequest.get(
+        '/Cake/GetByUserId?userId=$userId',
+        options: Options(
+          headers: {
+            "Authorization": bearerToken,
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      print("📌 Debug API Response: ${res.statusCode} - ${res.data}");
+
+      if (res.statusCode == 200 && res.data != null) {
+        List<dynamic> jsonResponse = res.data;
+
+        return jsonResponse.map((cake) => Cake.fromJson(cake)).toList();
+      } else {
+        print("⚠️ Lỗi: API trả về statusCode ${res.statusCode}");
+        throw Exception('⚠️ Không thể lấy danh sách bánh.');
+      }
+    } catch (e) {
+      print("❌ Lỗi fetchCakesByUserId(): $e");
+      throw Exception('❌ Lỗi fetchCakesByUserId(): $e');
     }
-
-    print("📌 Gửi yêu cầu lấy danh sách bánh cho UserID: $userId");
-
-    String bearerToken = "Bearer $token";
-    Response res = await api.sendRequest.get(
-      '/Cake/GetByUserId?userId=$userId',
-      options: Options(
-        headers: {
-          "Authorization": bearerToken,
-          "Content-Type": "application/json",
-        },
-      ),
-    );
-
-    print("📌 Debug API Response: ${res.statusCode} - ${res.data}");
-
-    if (res.statusCode == 200 && res.data != null) {
-      List<dynamic> jsonResponse = res.data;
-
-      return jsonResponse.map((cake) => Cake.fromJson(cake)).toList();
-    } else {
-      print("⚠️ Lỗi: API trả về statusCode ${res.statusCode}");
-      throw Exception('⚠️ Không thể lấy danh sách bánh.');
-    }
-  } catch (e) {
-    print("❌ Lỗi fetchCakesByUserId(): $e");
-    throw Exception('❌ Lỗi fetchCakesByUserId(): $e');
   }
-}
 
-Future<bool> deleteCake(String cakeId) async {
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+  Future<bool> deleteCake(String cakeId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
 
-    if (token == null) {
-      throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
-    }
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
 
-    Response res = await api.sendRequest.delete(
-      '/Cake/Delete Cake?id=$cakeId',
-      options: Options(
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      ),
-    );
+      Response res = await api.sendRequest.delete(
+        '/Cake/Delete Cake?id=$cakeId',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
 
-    if (res.statusCode == 200) {
-      return true; // ✅ Xóa thành công
-    } else {
-      print("❌ Lỗi khi xóa bánh: ${res.statusCode}");
+      if (res.statusCode == 200) {
+        return true; // ✅ Xóa thành công
+      } else {
+        print("❌ Lỗi khi xóa bánh: ${res.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Lỗi API deleteCake(): $e");
       return false;
     }
-  } catch (e) {
-    print("❌ Lỗi API deleteCake(): $e");
-    return false;
   }
-}
 
-Future<bool> updateCake(String cakeId, Cake updatedCake) async {
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+  Future<bool> updateCake(String cakeId, Cake updatedCake) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
 
-    if (token == null) {
-      throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
-    }
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
 
-    print("📌 Gửi yêu cầu cập nhật bánh với ID: $cakeId"); // Debug
+      print("📌 Gửi yêu cầu cập nhật bánh với ID: $cakeId"); // Debug
 
-    // Chỉ gửi các trường có giá trị cập nhật
-    Map<String, dynamic> updateData = {};
-    if (updatedCake.cakeName.isNotEmpty) updateData["CakeName"] = updatedCake.cakeName;
-    if (updatedCake.cakeSize != null) updateData["CakeSize"] = updatedCake.cakeSize;
-    if (updatedCake.cakeDescription.isNotEmpty) updateData["CakeDescription"] = updatedCake.cakeDescription;
-    if (updatedCake.cakePrice > 0) updateData["CakePrice"] = updatedCake.cakePrice;
-    if (updatedCake.cakeImage.isNotEmpty) updateData["CakeImage"] = updatedCake.cakeImage;
-    if (updatedCake.cakeCategoryId.isNotEmpty) updateData["CakeCategoryId"] = updatedCake.cakeCategoryId;
-    if (updatedCake.cakeRating >= 0) updateData["CakeRating"] = updatedCake.cakeRating;
-    if (updatedCake.cakeStock >= 0) updateData["CakeStock"] = updatedCake.cakeStock;
-    if (updatedCake.userId.isNotEmpty) updateData["UserId"] = updatedCake.userId;
+      // Chỉ gửi các trường có giá trị cập nhật
+      Map<String, dynamic> updateData = {};
+      if (updatedCake.cakeName.isNotEmpty)
+        updateData["CakeName"] = updatedCake.cakeName;
+      if (updatedCake.cakeSize != null)
+        updateData["CakeSize"] = updatedCake.cakeSize;
+      if (updatedCake.cakeDescription.isNotEmpty)
+        updateData["CakeDescription"] = updatedCake.cakeDescription;
+      if (updatedCake.cakePrice > 0)
+        updateData["CakePrice"] = updatedCake.cakePrice;
+      if (updatedCake.cakeImage.isNotEmpty)
+        updateData["CakeImage"] = updatedCake.cakeImage;
+      if (updatedCake.cakeCategoryId.isNotEmpty)
+        updateData["CakeCategoryId"] = updatedCake.cakeCategoryId;
+      if (updatedCake.cakeRating >= 0)
+        updateData["CakeRating"] = updatedCake.cakeRating;
+      if (updatedCake.cakeStock >= 0)
+        updateData["CakeStock"] = updatedCake.cakeStock;
+      if (updatedCake.userId.isNotEmpty)
+        updateData["UserId"] = updatedCake.userId;
 
-    if (updateData.isEmpty) {
-      print("⚠️ Không có dữ liệu nào cần cập nhật.");
+      if (updateData.isEmpty) {
+        print("⚠️ Không có dữ liệu nào cần cập nhật.");
+        return false;
+      }
+
+      Response res = await api.sendRequest.patch(
+        '/Cake/Update Cake?id=$cakeId', // ✅ Sửa đường dẫn API
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+        data: updateData,
+      );
+
+      if (res.statusCode == 200) {
+        print("✅ Cập nhật bánh thành công!");
+        return true;
+      } else {
+        print("❌ Lỗi cập nhật bánh: ${res.statusCode} - ${res.data}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Lỗi API updateCake(): $e");
       return false;
     }
-
-    Response res = await api.sendRequest.patch(
-      '/Cake/Update Cake?id=$cakeId', // ✅ Sửa đường dẫn API
-      options: Options(
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      ),
-      data: updateData,
-    );
-
-    if (res.statusCode == 200) {
-      print("✅ Cập nhật bánh thành công!");
-      return true;
-    } else {
-      print("❌ Lỗi cập nhật bánh: ${res.statusCode} - ${res.data}");
-      return false;
-    }
-  } catch (e) {
-    print("❌ Lỗi API updateCake(): $e");
-    return false;
   }
-}
 }
