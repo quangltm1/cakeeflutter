@@ -1,4 +1,5 @@
 import 'package:cakeeflutter/app/model/cake.dart';
+import 'package:cakeeflutter/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/api_service.dart';
@@ -9,13 +10,31 @@ class QuanLyCake extends StatefulWidget {
   _CakeListScreenState createState() => _CakeListScreenState();
 }
 
-class _CakeListScreenState extends State<QuanLyCake> {
+class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
   late Future<List<Cake>> futureCakes;
 
   @override
   void initState() {
     super.initState();
     futureCakes = Future.value([]); // ✅ Tránh lỗi null
+    _loadCakes();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute<dynamic>);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // Called when the current route has been popped off and the user returns to this route.
     _loadCakes();
   }
 

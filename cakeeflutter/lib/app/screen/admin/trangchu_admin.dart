@@ -107,8 +107,8 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
                     _buildFeatureButton('Bánh', Icons.shopping_bag, Colors.blue, () {
                       Navigator.pushNamed(context, '/cake'); // Chuyển đến màn hình sản phẩm
                     }),
-                    _buildFeatureButton('Khách hàng', Icons.person, Colors.green, () {
-                      Navigator.pushNamed(context, '/khach-hang'); // Chuyển đến màn hình khách hàng
+                    _buildFeatureButton('Danh mục bánh', Icons.category, Colors.green, () {
+                      Navigator.pushNamed(context, '/danh-muc'); // Chuyển đến màn hình khách hàng
                     }),
                     _buildFeatureButton('Đơn hàng', Icons.receipt, Colors.red, () {
                       Navigator.pushNamed(context, '/don-hang'); // Chuyển đến màn hình đơn hàng

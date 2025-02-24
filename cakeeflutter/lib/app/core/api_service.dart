@@ -1,4 +1,5 @@
 import 'package:cakeeflutter/app/model/cake.dart';
+import 'package:cakeeflutter/app/model/category.dart';
 import 'package:cakeeflutter/app/model/register.dart';
 import 'package:cakeeflutter/app/model/user.dart';
 import 'package:dio/dio.dart';
@@ -171,6 +172,37 @@ class APIRepository {
     }
   }
 
+  Future<List<Category>> fetchCategories() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+
+      Response res = await api.sendRequest.get(
+        '/Cake/GetAllCategories',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      if (res.statusCode == 200 && res.data != null) {
+        List<dynamic> jsonResponse = res.data;
+        return jsonResponse.map((data) => Category.fromJson(data)).toList();
+      } else {
+        throw Exception('⚠️ Không thể lấy danh mục bánh.');
+      }
+    } catch (e) {
+      print("❌ Lỗi fetchCategories(): $e");
+      throw Exception('❌ Lỗi fetchCategories(): $e');
+    }
+  }
+
   Future<bool> deleteCake(String cakeId) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -202,7 +234,8 @@ class APIRepository {
     }
   }
 
-  Future<bool> updateCake(String cakeId, Cake updatedCake) async {
+  Future<bool> updateCake(
+      String cakeId, Map<String, dynamic> updateData) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
@@ -211,36 +244,11 @@ class APIRepository {
         throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
       }
 
-      print("📌 Gửi yêu cầu cập nhật bánh với ID: $cakeId"); // Debug
-
-      // Chỉ gửi các trường có giá trị cập nhật
-      Map<String, dynamic> updateData = {};
-      if (updatedCake.cakeName.isNotEmpty)
-        updateData["CakeName"] = updatedCake.cakeName;
-      if (updatedCake.cakeSize != null)
-        updateData["CakeSize"] = updatedCake.cakeSize;
-      if (updatedCake.cakeDescription.isNotEmpty)
-        updateData["CakeDescription"] = updatedCake.cakeDescription;
-      if (updatedCake.cakePrice > 0)
-        updateData["CakePrice"] = updatedCake.cakePrice;
-      if (updatedCake.cakeImage.isNotEmpty)
-        updateData["CakeImage"] = updatedCake.cakeImage;
-      if (updatedCake.cakeCategoryId.isNotEmpty)
-        updateData["CakeCategoryId"] = updatedCake.cakeCategoryId;
-      if (updatedCake.cakeRating >= 0)
-        updateData["CakeRating"] = updatedCake.cakeRating;
-      if (updatedCake.cakeStock >= 0)
-        updateData["CakeStock"] = updatedCake.cakeStock;
-      if (updatedCake.userId.isNotEmpty)
-        updateData["UserId"] = updatedCake.userId;
-
-      if (updateData.isEmpty) {
-        print("⚠️ Không có dữ liệu nào cần cập nhật.");
-        return false;
-      }
+      print("📌 Gửi yêu cầu cập nhật bánh với ID: $cakeId");
+      print("📌 Dữ liệu gửi đi: $updateData"); // Debug
 
       Response res = await api.sendRequest.patch(
-        '/Cake/Update Cake?id=$cakeId', // ✅ Sửa đường dẫn API
+        '/Cake/$cakeId',
         options: Options(
           headers: {
             "Authorization": "Bearer $token",
@@ -262,4 +270,52 @@ class APIRepository {
       return false;
     }
   }
+
+  Future<String?> getCategoryName(String cakeId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+
+      Response res = await api.sendRequest.get(
+        '/Cake/Get Category Of Cake?cakeId=$cakeId',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      if (res.statusCode == 200 && res.data != null) {
+        return res.data["CategoryName"]; // Trả về tên danh mục
+      } else {
+        return "Không xác định";
+      }
+    } catch (e) {
+      print("❌ Lỗi lấy tên danh mục: $e");
+      return "Lỗi danh mục";
+    }
+  }
+
+  Future<List<Category>> getAllCategories() async {
+  try {
+    Response res = await api.sendRequest.get('/Cake/GetAllCategories');
+
+    if (res.statusCode == 200 && res.data != null) {
+      return res.data.map<Category>((json) => Category.fromJson(json)).toList();
+    } else {
+      throw Exception("Lỗi API: ${res.statusCode}");
+    }
+  } catch (e) {
+    print("❌ Lỗi khi lấy danh mục: $e");
+    return [];
+  }
+}
+
+
+
 }
