@@ -316,6 +316,40 @@ class APIRepository {
   }
 }
 
+Future<bool> createCake(Map<String, dynamic> cakeData) async {
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token == null) {
+      throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+    }
+
+    print("📌 Gửi yêu cầu tạo bánh mới: $cakeData"); // Debug
+
+    Response res = await api.sendRequest.post(
+      '/Cake/Create Cake',
+      options: Options(
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      ),
+      data: cakeData,
+    );
+
+    if (res.statusCode == 201 || res.statusCode == 200) {
+      print("✅ Tạo bánh thành công!");
+      return true;
+    } else {
+      print("❌ Lỗi khi tạo bánh: ${res.statusCode} - ${res.data}");
+      return false;
+    }
+  } catch (e) {
+    print("❌ Lỗi API createCake(): $e");
+    return false;
+  }
+}
 
 
 }

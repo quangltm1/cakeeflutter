@@ -1,5 +1,6 @@
+import 'package:cakeeflutter/app/screen/admin/category/quanlycategory.dart';
 import 'package:cakeeflutter/app/screen/admin/donhang_admin.dart';
-import 'package:cakeeflutter/app/screen/admin/quanlycake.dart';
+import 'package:cakeeflutter/app/screen/admin/cake/quanlycake.dart';
 import 'package:cakeeflutter/app/screen/admin/thuchi_admin.dart';
 import 'package:cakeeflutter/app/screen/login.dart';
 import 'package:cakeeflutter/app/screen/welcom_screen.dart';
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(), // Define the login screen route
         '/don-hang': (context) => DonHangAdmin(), // Define the donhang screen route
         '/cake': (context) => QuanLyCake(), // Define the thuchi screen route
+        '/danh-muc': (context) => QuanLyCategory(), // Define the quanlycake screen route
       },
     );
   }
