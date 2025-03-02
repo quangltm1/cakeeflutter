@@ -75,6 +75,34 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
     return List.generate(24, (index) => hexChars[random.nextInt(16)]).join();
   }
 
+  void _confirmDeleteCake(String cakeId) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Xác nhận xóa"),
+        content: Text("Bạn có chắc chắn muốn xóa bánh này không?"),
+        actions: [
+          TextButton(
+            child: Text("Hủy", style: TextStyle(color: Colors.grey)),
+            onPressed: () {
+              Navigator.of(context).pop(); // Đóng hộp thoại
+            },
+          ),
+          TextButton(
+            child: Text("Xóa", style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              Navigator.of(context).pop(); // Đóng hộp thoại trước khi xóa
+              _deleteCake(cakeId); // Gọi hàm xóa bánh
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,32 +123,105 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
               itemBuilder: (context, index) {
                 Cake cake = snapshot.data![index];
 
-                return ListTile(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => EditCakeScreen(cake: cake)),
-                    ).then((_) => _loadCakes()); // 🔥 Reload khi chỉnh sửa xong
-                  },
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      _getValidImageUrl(cake.cakeImage),
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.image_not_supported,
-                          size: 50,
-                          color: Colors.grey),
+                return Card(
+                  elevation: 4, // Hiệu ứng đổ bóng
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            _getValidImageUrl(cake.cakeImage),
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.image_not_supported,
+                              size: 100,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                cake.cakeName,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Text(
+                                cake.cakeDescription,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: Colors.grey[700]),
+                              ),
+                              SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  Icon(Icons.star,
+                                      color: Colors.amber, size: 18),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    cake.cakeRating.toString(),
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    "${cake.cakePrice.toStringAsFixed(0)} VND",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green[700],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        EditCakeScreen(cake: cake),
+                                  ),
+                                ).then((_) => _loadCakes());
+                              },
+                              child: Icon(Icons.edit, color: Colors.blue),
+                            ),
+                            SizedBox(height: 10),
+                            GestureDetector(
+                              onTap: () => _confirmDeleteCake(cake.id),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.red,
+                                ),
+                                padding: EdgeInsets.all(6),
+                                child: Icon(Icons.delete, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                  title: Text(cake.cakeName),
-                  subtitle: Text(cake.cakeDescription),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteCake(cake.id),
                   ),
                 );
               },

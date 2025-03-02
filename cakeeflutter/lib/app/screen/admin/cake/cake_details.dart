@@ -42,92 +42,103 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
   }
 
   void _loadCategories() async {
-    try {
-      List<Category> categories = await APIRepository().fetchCategories();
-      setState(() {
-        _categories = categories;
-        bool isValidCategory =
-            _categories.any((c) => c.id == _selectedCategoryId);
-        if (!isValidCategory) {
-          _selectedCategoryId = null;
-        }
-      });
-    } catch (e) {
-      print("❌ Lỗi khi lấy danh mục: $e");
-    }
-  }
-
-  void _saveChanges() async {
-  setState(() {
-    _isLoading = true;
-  });
-
   try {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString('userId');
 
     if (userId == null || userId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Không tìm thấy User ID!")),
-      );
+      print("❌ Không tìm thấy User ID!");
       return;
     }
 
-    // Kiểm tra kiểu dữ liệu
-    print("📌 userId: $userId (${userId.runtimeType})");
-    print("📌 cakeCategoryId: $_selectedCategoryId (${_selectedCategoryId.runtimeType})");
 
-    Map<String, dynamic> cakeData = {
-      "cakeName": _nameController.text.trim(),
-      "cakeDescription": _descriptionController.text.trim(),
-      "cakePrice": double.tryParse(_priceController.text.trim()) ?? 0.0,
-      "cakeQuantity": int.tryParse(_stockController.text.trim()) ?? 0,
-      "cakeImage": _imageController.text.trim(),
-      "cakeCategoryId": _selectedCategoryId ?? "",
-      "userId": userId,
-    };
+    List<Category> categories = await APIRepository().getCategoryByUserID(userId);
 
-    print("📌 Dữ liệu gửi lên API: ${cakeData.toString()}");
-
-    bool success;
-    if (widget.cake.id.isNotEmpty) {
-      print("📌 Đang cập nhật bánh với ID: ${widget.cake.id}");
-      success = await APIRepository().updateCake(widget.cake.id, cakeData);
-    } else {
-      print("📌 Đang tạo bánh mới...");
-      success = await APIRepository().createCake(cakeData);
-    }
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.cake.id.isNotEmpty
-              ? "✅ Cập nhật thành công!"
-              : "✅ Đã tạo bánh mới!"),
-        ),
-      );
-      Navigator.pop(context, true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Thao tác thất bại!")),
-      );
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ Lỗi khi xử lý: $e")),
-    );
-  } finally {
     setState(() {
-      _isLoading = false;
+      _categories = categories;
+      bool isValidCategory = _categories.any((c) => c.id == _selectedCategoryId);
+      if (!isValidCategory) {
+        _selectedCategoryId = null;
+      }
     });
+
+  } catch (e) {
+    print("❌ Lỗi khi lấy danh mục: $e");
   }
 }
 
 
+  void _saveChanges() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userId = prefs.getString('userId');
+
+      if (userId == null || userId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("❌ Không tìm thấy User ID!")),
+        );
+        return;
+      }
+
+      // Kiểm tra kiểu dữ liệu
+      print("📌 userId: $userId (${userId.runtimeType})");
+      print(
+          "📌 cakeCategoryId: $_selectedCategoryId (${_selectedCategoryId.runtimeType})");
+
+      Map<String, dynamic> cakeData = {
+        "cakeName": _nameController.text.trim(),
+        "cakeDescription": _descriptionController.text.trim(),
+        "cakePrice": double.tryParse(_priceController.text.trim()) ?? 0.0,
+        "cakeQuantity": int.tryParse(_stockController.text.trim()) ?? 0,
+        "cakeImage": _imageController.text.trim(),
+        "cakeCategoryId": _selectedCategoryId ?? "",
+        "userId": userId,
+      };
+
+
+      bool success;
+      if (widget.cake.id.isNotEmpty) {
+        success = await APIRepository().updateCake(widget.cake.id, cakeData);
+      } else {
+        success = await APIRepository().createCake(cakeData);
+      }
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.cake.id.isNotEmpty
+                ? "✅ Cập nhật thành công!"
+                : "✅ Đã tạo bánh mới!"),
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("❌ Thao tác thất bại!")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Lỗi khi xử lý: $e")),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Chỉnh sửa bánh")),
+      appBar: AppBar(
+        title:
+            Text(widget.cake.id.isNotEmpty ? "Chỉnh sửa bánh" : "Tạo bánh mới"),
+      ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: SingleChildScrollView(

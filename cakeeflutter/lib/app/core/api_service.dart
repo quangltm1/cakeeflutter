@@ -108,8 +108,6 @@ class APIRepository {
     try {
       String bearerToken = "Bearer $token"; // Thêm "Bearer "
 
-      print("🔄 Gửi request lấy user với token: $bearerToken"); // Debug token
-
       Response res = await api.sendRequest.get(
         '/User/current',
         options: Options(
@@ -143,8 +141,6 @@ class APIRepository {
         throw Exception('❌ Token không tồn tại. Vui lòng đăng nhập lại.');
       }
 
-      print("📌 Gửi yêu cầu lấy danh sách bánh cho UserID: $userId");
-
       String bearerToken = "Bearer $token";
       Response res = await api.sendRequest.get(
         '/Cake/GetByUserId?userId=$userId',
@@ -156,23 +152,19 @@ class APIRepository {
         ),
       );
 
-      print("📌 Debug API Response: ${res.statusCode} - ${res.data}");
-
       if (res.statusCode == 200 && res.data != null) {
         List<dynamic> jsonResponse = res.data;
 
         return jsonResponse.map((cake) => Cake.fromJson(cake)).toList();
       } else {
-        print("⚠️ Lỗi: API trả về statusCode ${res.statusCode}");
         throw Exception('⚠️ Không thể lấy danh sách bánh.');
       }
     } catch (e) {
-      print("❌ Lỗi fetchCakesByUserId(): $e");
       throw Exception('❌ Lỗi fetchCakesByUserId(): $e');
     }
   }
 
-  Future<List<Category>> fetchCategories() async {
+  Future<List<Category>> getCategoryByUserID(String userId) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
@@ -182,7 +174,8 @@ class APIRepository {
       }
 
       Response res = await api.sendRequest.get(
-        '/Cake/GetAllCategories',
+        '/Category/GetCategoryByUserId?userId=$userId', // <-- Đúng route
+
         options: Options(
           headers: {
             "Authorization": "Bearer $token",
@@ -198,8 +191,7 @@ class APIRepository {
         throw Exception('⚠️ Không thể lấy danh mục bánh.');
       }
     } catch (e) {
-      print("❌ Lỗi fetchCategories(): $e");
-      throw Exception('❌ Lỗi fetchCategories(): $e');
+      throw Exception('❌ Lỗi getCategoryByUserID(): $e');
     }
   }
 
@@ -225,11 +217,9 @@ class APIRepository {
       if (res.statusCode == 200) {
         return true; // ✅ Xóa thành công
       } else {
-        print("❌ Lỗi khi xóa bánh: ${res.statusCode}");
         return false;
       }
     } catch (e) {
-      print("❌ Lỗi API deleteCake(): $e");
       return false;
     }
   }
@@ -244,9 +234,6 @@ class APIRepository {
         throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
       }
 
-      print("📌 Gửi yêu cầu cập nhật bánh với ID: $cakeId");
-      print("📌 Dữ liệu gửi đi: $updateData"); // Debug
-
       Response res = await api.sendRequest.patch(
         '/Cake/$cakeId',
         options: Options(
@@ -259,14 +246,11 @@ class APIRepository {
       );
 
       if (res.statusCode == 200) {
-        print("✅ Cập nhật bánh thành công!");
         return true;
       } else {
-        print("❌ Lỗi cập nhật bánh: ${res.statusCode} - ${res.data}");
         return false;
       }
     } catch (e) {
-      print("❌ Lỗi API updateCake(): $e");
       return false;
     }
   }
@@ -296,63 +280,86 @@ class APIRepository {
         return "Không xác định";
       }
     } catch (e) {
-      print("❌ Lỗi lấy tên danh mục: $e");
       return "Lỗi danh mục";
     }
   }
 
   Future<List<Category>> getAllCategories() async {
-  try {
-    Response res = await api.sendRequest.get('/Cake/GetAllCategories');
+    try {
+      Response res = await api.sendRequest.get('/Cake/GetAllCategories');
 
-    if (res.statusCode == 200 && res.data != null) {
-      return res.data.map<Category>((json) => Category.fromJson(json)).toList();
-    } else {
-      throw Exception("Lỗi API: ${res.statusCode}");
+      if (res.statusCode == 200 && res.data != null) {
+        return res.data
+            .map<Category>((json) => Category.fromJson(json))
+            .toList();
+      } else {
+        throw Exception("Lỗi API: ${res.statusCode}");
+      }
+    } catch (e) {
+      return [];
     }
-  } catch (e) {
-    print("❌ Lỗi khi lấy danh mục: $e");
-    return [];
   }
-}
 
-Future<bool> createCake(Map<String, dynamic> cakeData) async {
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+  Future<bool> deleteCategory(String categoryId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
 
-    if (token == null) {
-      print("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      if (token == null) {
+        return false;
+      }
+
+      Response res = await api.sendRequest.delete(
+        '/Cake/Delete Category?categoryId=$categoryId',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      if (res.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
       return false;
     }
+  }
 
-    // Xóa `id` trước khi gửi request để tránh lỗi
-    cakeData.remove("id");
+  Future<bool> createCake(Map<String, dynamic> cakeData) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
 
-    print("📌 Gửi yêu cầu tạo bánh mới: $cakeData");
+      if (token == null) {
+        return false;
+      }
 
-    Response res = await api.sendRequest.post(
-      '/Cake/Create Cake', // 🔥 Cập nhật lại endpoint cho đúng
-      options: Options(
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      ),
-      data: cakeData,
-    );
+      // Xóa `id` trước khi gửi request để tránh lỗi
+      cakeData.remove("id");
 
-    if (res.statusCode == 201 || res.statusCode == 200) {
-      print("✅ Tạo bánh thành công!");
-      return true;
-    } else {
-      print("❌ Lỗi khi tạo bánh: ${res.statusCode} - ${res.data ?? res.statusMessage}");
+
+      Response res = await api.sendRequest.post(
+        '/Cake/Create Cake',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+        data: cakeData,
+      );
+
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
       return false;
     }
-  } catch (e) {
-    print("❌ Lỗi API createCake(): $e");
-    return false;
   }
-}
-
 }
