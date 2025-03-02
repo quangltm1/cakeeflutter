@@ -322,13 +322,17 @@ Future<bool> createCake(Map<String, dynamic> cakeData) async {
     String? token = prefs.getString('token');
 
     if (token == null) {
-      throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      print("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      return false;
     }
 
-    print("📌 Gửi yêu cầu tạo bánh mới: $cakeData"); // Debug
+    // Xóa `id` trước khi gửi request để tránh lỗi
+    cakeData.remove("id");
+
+    print("📌 Gửi yêu cầu tạo bánh mới: $cakeData");
 
     Response res = await api.sendRequest.post(
-      '/Cake/Create Cake',
+      '/Cake/Create Cake', // 🔥 Cập nhật lại endpoint cho đúng
       options: Options(
         headers: {
           "Authorization": "Bearer $token",
@@ -342,7 +346,7 @@ Future<bool> createCake(Map<String, dynamic> cakeData) async {
       print("✅ Tạo bánh thành công!");
       return true;
     } else {
-      print("❌ Lỗi khi tạo bánh: ${res.statusCode} - ${res.data}");
+      print("❌ Lỗi khi tạo bánh: ${res.statusCode} - ${res.data ?? res.statusMessage}");
       return false;
     }
   } catch (e) {
@@ -350,6 +354,5 @@ Future<bool> createCake(Map<String, dynamic> cakeData) async {
     return false;
   }
 }
-
 
 }

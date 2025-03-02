@@ -37,4 +37,18 @@ class Cake {
       userId: json['userId'].toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "cakeName": cakeName,
+      "cakeSize": cakeSize,
+      "cakeDescription": cakeDescription,
+      "cakePrice": cakePrice,
+      "cakeImage": cakeImage,
+      "cakeCategoryId": {"_id": cakeCategoryId}, // ObjectId trong MongoDB
+      "cakeRating": cakeRating,
+      "cakeQuantity": cakeStock,
+      "userId": {"_id": userId}, // ObjectId trong MongoDB
+    };
+  }
 }

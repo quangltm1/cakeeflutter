@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cakeeflutter/app/model/cake.dart';
 import 'package:cakeeflutter/app/model/category.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/api_service.dart';
 
 class EditCakeScreen extends StatefulWidget {
@@ -28,9 +29,12 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
     super.initState();
 
     _nameController = TextEditingController(text: widget.cake.cakeName);
-    _descriptionController = TextEditingController(text: widget.cake.cakeDescription);
-    _priceController = TextEditingController(text: widget.cake.cakePrice.toString());
-    _stockController = TextEditingController(text: widget.cake.cakeStock.toString());
+    _descriptionController =
+        TextEditingController(text: widget.cake.cakeDescription);
+    _priceController =
+        TextEditingController(text: widget.cake.cakePrice.toString());
+    _stockController =
+        TextEditingController(text: widget.cake.cakeStock.toString());
     _imageController = TextEditingController(text: widget.cake.cakeImage ?? "");
 
     _selectedCategoryId = widget.cake.cakeCategoryId;
@@ -42,7 +46,8 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
       List<Category> categories = await APIRepository().fetchCategories();
       setState(() {
         _categories = categories;
-        bool isValidCategory = _categories.any((c) => c.id == _selectedCategoryId);
+        bool isValidCategory =
+            _categories.any((c) => c.id == _selectedCategoryId);
         if (!isValidCategory) {
           _selectedCategoryId = null;
         }
@@ -58,30 +63,50 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
   });
 
   try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userId = prefs.getString('userId');
+
+    if (userId == null || userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Không tìm thấy User ID!")),
+      );
+      return;
+    }
+
+    // Kiểm tra kiểu dữ liệu
+    print("📌 userId: $userId (${userId.runtimeType})");
+    print("📌 cakeCategoryId: $_selectedCategoryId (${_selectedCategoryId.runtimeType})");
+
     Map<String, dynamic> cakeData = {
-      "CakeName": _nameController.text.trim(),
-      "CakeDescription": _descriptionController.text.trim(),
-      "CakePrice": double.tryParse(_priceController.text.trim()) ?? 0.0,
-      "CakeQuantity": int.tryParse(_stockController.text.trim()) ?? 0,
-      "CakeImage": _imageController.text.trim(),
-      "CakeCategoryId": _selectedCategoryId ?? "",
+      "cakeName": _nameController.text.trim(),
+      "cakeDescription": _descriptionController.text.trim(),
+      "cakePrice": double.tryParse(_priceController.text.trim()) ?? 0.0,
+      "cakeQuantity": int.tryParse(_stockController.text.trim()) ?? 0,
+      "cakeImage": _imageController.text.trim(),
+      "cakeCategoryId": _selectedCategoryId ?? "",
+      "userId": userId,
     };
 
-    bool success;
+    print("📌 Dữ liệu gửi lên API: ${cakeData.toString()}");
 
-    if (widget.cake.id.isEmpty) {
-      // 🆕 Tạo bánh mới (ID rỗng)
-      success = await APIRepository().createCake(cakeData);
-    } else {
-      // 🔄 Cập nhật bánh hiện tại
+    bool success;
+    if (widget.cake.id.isNotEmpty) {
+      print("📌 Đang cập nhật bánh với ID: ${widget.cake.id}");
       success = await APIRepository().updateCake(widget.cake.id, cakeData);
+    } else {
+      print("📌 Đang tạo bánh mới...");
+      success = await APIRepository().createCake(cakeData);
     }
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.cake.id.isEmpty ? "✅ Đã tạo bánh mới!" : "✅ Cập nhật thành công!")),
+        SnackBar(
+          content: Text(widget.cake.id.isNotEmpty
+              ? "✅ Cập nhật thành công!"
+              : "✅ Đã tạo bánh mới!"),
+        ),
       );
-      Navigator.pop(context, true); // 🔥 Reload lại danh sách bánh
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("❌ Thao tác thất bại!")),
@@ -109,7 +134,6 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🖼 Hình ảnh bánh
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -121,7 +145,8 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
                     height: 200,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return Icon(Icons.image_not_supported, size: 100, color: Colors.grey);
+                      return Icon(Icons.image_not_supported,
+                          size: 100, color: Colors.grey);
                     },
                   ),
                 ),
@@ -132,21 +157,24 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
               _buildTextField(_nameController, "Tên bánh"),
               _buildTextField(_descriptionController, "Mô tả", maxLines: 3),
               _buildTextField(_priceController, "Giá (VND)", isNumber: true),
-              _buildTextField(_stockController, "Số lượng tồn kho", isNumber: true),
+              _buildTextField(_stockController, "Số lượng tồn kho",
+                  isNumber: true),
               SizedBox(height: 20),
-
-              // 📌 Dropdown danh mục bánh (Sửa dropdown sổ xuống dưới)
-              Text("Danh mục bánh:", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Danh mục bánh:",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               _categories.isEmpty
                   ? CircularProgressIndicator()
                   : DropdownButtonFormField<String>(
                       value: _selectedCategoryId,
-                      decoration: InputDecoration(border: OutlineInputBorder(), filled: true),
-                      menuMaxHeight: 300, // ✅ Đặt chiều cao dropdown để sổ xuống dưới
+                      decoration: InputDecoration(
+                          border: OutlineInputBorder(), filled: true),
+                      menuMaxHeight: 300,
                       items: _categories.map((category) {
                         return DropdownMenuItem<String>(
                           value: category.id,
-                          child: Text(category.categoryName.isNotEmpty ? category.categoryName : "Không có tên"),
+                          child: Text(category.categoryName.isNotEmpty
+                              ? category.categoryName
+                              : "Không có tên"),
                         );
                       }).toList(),
                       onChanged: (newValue) {
@@ -156,19 +184,19 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
                       },
                     ),
               SizedBox(height: 20),
-
-              // 🔥 Nút lưu thay đổi
               _isLoading
                   ? Center(child: CircularProgressIndicator())
                   : ElevatedButton.icon(
                       icon: Icon(Icons.save),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.amber,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         padding: EdgeInsets.symmetric(vertical: 15),
                       ),
                       onPressed: _saveChanges,
-                      label: Text("Lưu thay đổi", style: TextStyle(fontSize: 16)),
+                      label:
+                          Text("Lưu thay đổi", style: TextStyle(fontSize: 16)),
                     ),
             ],
           ),
@@ -177,12 +205,14 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, {int maxLines = 1, bool isNumber = false}) {
+  Widget _buildTextField(TextEditingController controller, String label,
+      {int maxLines = 1, bool isNumber = false}) {
     return Padding(
       padding: EdgeInsets.only(bottom: 10),
       child: TextField(
         controller: controller,
-        decoration: InputDecoration(labelText: label, border: OutlineInputBorder(), filled: true),
+        decoration: InputDecoration(
+            labelText: label, border: OutlineInputBorder(), filled: true),
         maxLines: maxLines,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       ),

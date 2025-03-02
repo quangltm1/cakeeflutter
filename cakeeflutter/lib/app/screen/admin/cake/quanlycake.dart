@@ -17,14 +17,15 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
   @override
   void initState() {
     super.initState();
-    futureCakes = Future.value([]); 
+    futureCakes = Future.value([]);
     _loadCakes();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute<dynamic>);
+    routeObserver.subscribe(
+        this, ModalRoute.of(context)! as PageRoute<dynamic>);
   }
 
   @override
@@ -58,10 +59,12 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
   void _deleteCake(String cakeId) async {
     bool success = await APIRepository().deleteCake(cakeId);
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("✅ Xóa bánh thành công!")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("✅ Xóa bánh thành công!")));
       _loadCakes();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("❌ Lỗi khi xóa bánh!")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("❌ Lỗi khi xóa bánh!")));
     }
   }
 
@@ -75,13 +78,16 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Quản Lý Bánh'), backgroundColor: Colors.amber),
+      appBar:
+          AppBar(title: Text('Quản Lý Bánh'), backgroundColor: Colors.amber),
       body: FutureBuilder<List<Cake>>(
         future: futureCakes,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          } else if (snapshot.hasError ||
+              !snapshot.hasData ||
+              snapshot.data!.isEmpty) {
             return Center(child: Text('Không có bánh nào được tìm thấy.'));
           } else {
             return ListView.builder(
@@ -93,15 +99,21 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => EditCakeScreen(cake: cake)),
+                      MaterialPageRoute(
+                          builder: (context) => EditCakeScreen(cake: cake)),
                     ).then((_) => _loadCakes()); // 🔥 Reload khi chỉnh sửa xong
                   },
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
                       _getValidImageUrl(cake.cakeImage),
-                      width: 50, height: 50, fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.image_not_supported,
+                          size: 50,
+                          color: Colors.grey),
                     ),
                   ),
                   title: Text(cake.cakeName),
@@ -116,35 +128,36 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
           }
         },
       ),
-
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.amber,
         onPressed: () async {
           SharedPreferences prefs = await SharedPreferences.getInstance();
-          String? userId = prefs.getString('userId'); // 🔥 Lấy userId từ SharedPreferences
+          String? userId = prefs.getString('userId');
 
           if (userId == null) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("❌ Lỗi: Không tìm thấy User ID!")));
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("❌ Lỗi: Không tìm thấy User ID!")));
             return;
           }
 
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => EditCakeScreen(
-              cake: Cake(
-                id: _generateObjectId(), // 🔥 ID mới theo chuẩn ObjectId
-                cakeName: '',
-                cakeSize: 0,
-                cakeDescription: '',
-                cakePrice: 0.0,
-                cakeImage: '',
-                cakeRating: 0.0,
-                cakeStock: 0,
-                cakeCategoryId: '',
-                userId: userId, // ✅ Gán đúng userId của người dùng hiện tại
-              ),
-            )),
-          ).then((_) => _loadCakes()); // 🔥 Khi quay lại, load lại danh sách bánh
+            MaterialPageRoute(
+                builder: (context) => EditCakeScreen(
+                      cake: Cake(
+                        id: "", // ❌ Không tự động tạo ID mới, để API tự xử lý
+                        cakeName: '',
+                        cakeSize: 0,
+                        cakeDescription: '',
+                        cakePrice: 0.0,
+                        cakeImage: '',
+                        cakeRating: 0.0,
+                        cakeStock: 0,
+                        cakeCategoryId: '',
+                        userId: userId,
+                      ),
+                    )),
+          ).then((_) => _loadCakes()); // 🔥 Reload danh sách bánh sau khi thêm
         },
         child: Icon(Icons.add, size: 28),
       ),
@@ -153,9 +166,11 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
 
   String _getValidImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) {
-      return "https://via.placeholder.com/150"; 
+      return "https://via.placeholder.com/150";
     }
     Uri? uri = Uri.tryParse(imageUrl);
-    return (uri != null && (uri.scheme == "http" || uri.scheme == "https")) ? imageUrl : "https://via.placeholder.com/150";
+    return (uri != null && (uri.scheme == "http" || uri.scheme == "https"))
+        ? imageUrl
+        : "https://via.placeholder.com/150";
   }
 }
