@@ -3,7 +3,7 @@ import 'package:cakeeflutter/app/model/cake.dart';
 import 'package:cakeeflutter/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/api_service.dart';
+import '../../../core/base_service.dart';
 import 'cake_details.dart';
 
 class QuanLyCake extends StatefulWidget {

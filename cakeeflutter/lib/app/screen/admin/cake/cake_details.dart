@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cakeeflutter/app/model/cake.dart';
 import 'package:cakeeflutter/app/model/category.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/api_service.dart';
+import '../../../core/base_service.dart';
 
 class EditCakeScreen extends StatefulWidget {
   final Cake cake;

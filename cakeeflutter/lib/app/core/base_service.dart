@@ -1,5 +1,6 @@
 import 'package:cakeeflutter/app/model/acessory.dart';
 import 'package:cakeeflutter/app/model/cake.dart';
+import 'package:cakeeflutter/app/model/cakesize.dart';
 import 'package:cakeeflutter/app/model/category.dart';
 import 'package:cakeeflutter/app/model/register.dart';
 import 'package:cakeeflutter/app/model/user.dart';
@@ -535,6 +536,7 @@ class APIRepository {
       return false;
     }
   }
+
   //Delete Acessory
   Future<bool> deleteAcessory(String acessoryId) async {
     try {
@@ -638,6 +640,179 @@ class APIRepository {
     } catch (e) {
       print('❌ Lỗi khi lấy phụ kiện: $e');
       return null;
+    }
+  }
+
+  /// ✅ **Thêm mới Cake Size**
+  Future<bool> createCakeSize(String sizeName, String userId) async {
+  try {
+    String? token = await _getToken();
+    if (token == null) throw Exception("❌ Token không tồn tại.");
+
+    print("📌 Gửi request tạo Cake Size với User ID: $userId và Size Name: $sizeName");
+
+    Response res = await api.sendRequest.post(
+      '/CakeSize/Create Cake Size',
+      options: Options(headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      }),
+      data: {
+        "sizeName": sizeName,
+        "userId": userId,
+      },
+    );
+
+    print("📌 API Response (${res.statusCode}): ${res.data}");
+
+    if (res.statusCode == 201 || res.statusCode == 200) {
+      print("✅ Tạo Cake Size thành công!");
+      return true;
+    } else {
+      print("⚠️ API trả về lỗi: ${res.statusCode} - ${res.data}");
+      return false;
+    }
+  } catch (e) {
+    print("❌ Lỗi API createCakeSize: $e");
+    return false;
+  }
+}
+
+
+  /// ✅ **Cập nhật Cake Size**
+  Future<bool> updateCakeSize(String cakeSizeId, String newSizeName) async {
+    try {
+      String? token = await _getToken();
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+
+      print(
+          "📌 Gửi request UPDATE Cake Size ID: $cakeSizeId với tên mới: $newSizeName");
+
+      Response res = await api.sendRequest.patch(
+        '/CakeSize/Update Cake Size?id=$cakeSizeId', // Đúng endpoint
+        options: Options(headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        }),
+        data: {
+          "sizeName": newSizeName, // 🔥 Chỉ truyền đúng name
+        },
+      );
+
+      if (res.statusCode == 200) {
+        print("✅ Cập nhật Cake Size thành công!");
+        return true;
+      } else {
+        print("⚠️ API trả về lỗi: ${res.statusCode} - ${res.data}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Lỗi cập nhật Cake Size: $e");
+      return false;
+    }
+  }
+
+  /// ✅ **Xóa Cake Size**
+  Future<bool> deleteCakeSize(String cakeSizeId) async {
+    try {
+      String? token = await _getToken();
+      if (token == null)
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+
+      print("🗑 Gửi yêu cầu xóa Cake Size ID: $cakeSizeId");
+
+      Response res = await api.sendRequest.delete(
+        '/CakeSize/Delete Cake Size?id=$cakeSizeId',
+        options: Options(headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        }),
+      );
+
+      print("📌 Phản hồi từ server: ${res.statusCode} - ${res.data}");
+
+      if (res.statusCode == 200) {
+        print("✅ Xóa Cake Size thành công!");
+        return true;
+      } else {
+        print("⚠️ API trả về lỗi: ${res.statusCode} - ${res.data}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Lỗi xóa Cake Size: $e");
+      return false;
+    }
+  }
+
+  Future<CakeSize?> getCakeSizeById(String cakeSizeId) async {
+    try {
+      String? token = await _getToken();
+      if (token == null) {
+        print("❌ Token không tồn tại.");
+        return null;
+      }
+
+      String url =
+          '/CakeSize/Get Cake Size By Id?id=$cakeSizeId'; // 🔥 Đổi thành đường dẫn đúng
+      print("📌 Gửi request GET: $url");
+
+      Response res = await api.sendRequest.get(
+        url,
+        options: Options(headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        }),
+      );
+
+      print("📌 API Response (${res.statusCode}): ${res.data}");
+
+      if (res.statusCode == 200 && res.data != null) {
+        return CakeSize.fromJson(res.data);
+      } else {
+        print("⚠️ Không thể lấy Cake Size: ${res.statusCode} - ${res.data}");
+        return null;
+      }
+    } catch (e) {
+      print("❌ Lỗi lấy Cake Size: $e");
+      return null;
+    }
+  }
+
+  Future<List<CakeSize>> fetchCakeSizesByUserId(String userId) async {
+    try {
+      String? token = await _getToken();
+      if (token == null)
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+
+      Response res = await api.sendRequest.get(
+        '/CakeSize/GetByUserId?id=$userId',
+        options: Options(headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        }),
+      );
+
+      print("📌 API Response Status: ${res.statusCode}");
+      print("📌 API Response Data: ${res.data}");
+
+      if (res.statusCode == 200 && res.data != null) {
+        List<dynamic> jsonResponse = res.data;
+        List<CakeSize> sizes =
+            jsonResponse.map((data) => CakeSize.fromJson(data)).toList();
+
+        print(
+            "📌 Danh sách Cake Size nhận được: ${sizes.map((e) => e.sizeName).toList()}");
+
+        return sizes;
+      } else {
+        print("⚠️ Không thể lấy danh sách Cake Size.");
+        return [];
+      }
+    } catch (e) {
+      print("❌ Lỗi fetchCakeSizesByUserId: $e");
+      return [];
     }
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cakeeflutter/app/model/acessory.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/api_service.dart';
+import '../../../core/base_service.dart';
 import 'acessory_details.dart';
 
 class QuanLyAcessory extends StatefulWidget {

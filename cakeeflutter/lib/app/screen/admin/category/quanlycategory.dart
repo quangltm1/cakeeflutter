@@ -2,7 +2,7 @@ import 'package:cakeeflutter/app/screen/admin/category/category_details.dart';
 import 'package:flutter/material.dart';
 import 'package:cakeeflutter/app/model/category.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/api_service.dart';
+import '../../../core/base_service.dart';
 
 class QuanLyCategory extends StatefulWidget {
   @override
