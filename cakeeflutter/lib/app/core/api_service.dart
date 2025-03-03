@@ -1,3 +1,4 @@
+import 'package:cakeeflutter/app/model/acessory.dart';
 import 'package:cakeeflutter/app/model/cake.dart';
 import 'package:cakeeflutter/app/model/category.dart';
 import 'package:cakeeflutter/app/model/register.dart';
@@ -26,6 +27,16 @@ class APIRepository {
       'Accept': '*/*',
       'Authorization': 'Bearer $token'
     };
+  }
+
+  Future<String?> _getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  Future<String?> _getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId'); // Lấy userId đã lưu khi đăng nhập
   }
 
   Future<String> register(Signup user, bool isSeller) async {
@@ -301,33 +312,36 @@ class APIRepository {
   }
 
   Future<bool> deleteCategory(String categoryId) async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('token');
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
 
-      if (token == null) {
-        return false;
-      }
-
-      Response res = await api.sendRequest.delete(
-        '/Cake/Delete Category?categoryId=$categoryId',
-        options: Options(
-          headers: {
-            "Authorization": "Bearer $token",
-            "Content-Type": "application/json",
-          },
-        ),
-      );
-
-      if (res.statusCode == 200) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
+    if (token == null) {
+      print("❌ Token không tồn tại!");
       return false;
     }
+
+    print("🗑 Gửi yêu cầu xóa danh mục ID: $categoryId");
+
+    Response res = await api.sendRequest.delete(
+      '/Category/Delete Category?id=$categoryId',
+      options: Options(
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      ),
+    );
+
+    print("📌 Phản hồi từ server: ${res.statusCode} - ${res.data}");
+
+    return res.statusCode == 200;
+  } catch (e) {
+    print("❌ Lỗi xóa danh mục: $e");
+    return false;
   }
+}
+
 
   Future<bool> createCake(Map<String, dynamic> cakeData) async {
     try {
@@ -340,7 +354,6 @@ class APIRepository {
 
       // Xóa `id` trước khi gửi request để tránh lỗi
       cakeData.remove("id");
-
 
       Response res = await api.sendRequest.post(
         '/Cake/Create Cake',
@@ -360,6 +373,235 @@ class APIRepository {
       }
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<Category?> getCategoryById(String categoryId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+
+      String url = '/Category/Get Category By Id?id=$categoryId';
+      print("📌 Gửi request đến API: $url");
+
+      Response res = await api.sendRequest.get(
+        url,
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      print("📌 API trả về: ${res.data}"); // Debug dữ liệu gốc
+
+      if (res.statusCode == 200 && res.data != null) {
+        Category category = Category.fromJson(res.data);
+        print("📌 Category nhận từ API: ${category.categoryName}");
+        return category;
+      } else {
+        throw Exception('⚠️ Không thể lấy danh mục.');
+      }
+    } catch (e) {
+      print('❌ Lỗi khi lấy danh mục: $e');
+      return null;
+    }
+  }
+
+  Future<bool> addCategory(String categoryName) async {
+  try {
+    String? token = await _getToken();
+    String? userId = await _getUserId(); // Lấy userId từ SharedPreferences
+
+    if (userId == null) {
+      print("❌ Lỗi: Không tìm thấy userId.");
+      return false;
+    }
+
+    Response res = await api.sendRequest.post(
+      '/Category/Create Category',
+      options: Options(headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      }),
+      data: {
+        "categoryName": categoryName,
+        "userId": userId,
+      },
+    );
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      print("✅ Tạo danh mục thành công: ${res.data}");
+      return true;
+    } else {
+      print("❌ API trả về lỗi: ${res.statusCode} - ${res.data}");
+      return false;
+    }
+  } catch (e) {
+    print("❌ Lỗi API addCategory: $e");
+    return false;
+  }
+}
+
+
+  // 📌 Cập nhật danh mục
+  Future<bool> updateCategory(String categoryId, String newCategoryName) async {
+    try {
+      String? token = await _getToken();
+      Response res = await api.sendRequest.patch(
+        '/Category/Update Category?id=$categoryId',
+        options: Options(headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        }),
+        data: {"categoryName": newCategoryName},
+      );
+      return res.statusCode == 200;
+    } catch (e) {
+      print("❌ Lỗi API updateCategory: $e");
+      return false;
+    }
+  }
+
+  //Acessory
+  Future<List<Acessory>> fetchAcessoriesByUserId(String userId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('❌ Token không tồn tại. Vui lòng đăng nhập lại.');
+      }
+
+      String bearerToken = "Bearer $token";
+      Response res = await api.sendRequest.get(
+        '/Acessory/GetAcessoryByUserId?userId=$userId',
+        options: Options(
+          headers: {
+            "Authorization": bearerToken,
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      if (res.statusCode == 200 && res.data != null) {
+        List<dynamic> jsonResponse = res.data;
+
+        return jsonResponse
+            .map((acessory) => Acessory.fromJson(acessory))
+            .toList();
+      } else {
+        throw Exception('⚠️ Không thể lấy danh sách phụ kiện.');
+      }
+    } catch (e) {
+      throw Exception('❌ Lỗi fetchAcessoriesByUserId(): $e');
+    }
+  }
+
+  //Delete Acessory
+  Future<bool> deleteAcessory(String acessoryId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+
+      Response res = await api.sendRequest.delete(
+        '/Acessory/Delete Acessory?id=$acessoryId',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      if (res.statusCode == 200) {
+        return true; // ✅ Xóa thành công
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  //Update Acessory
+  Future<bool> updateAcessory(
+      String acessoryId, Map<String, dynamic> updateData) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+
+      Response res = await api.sendRequest.patch(
+        '/Acessory/Update Acessory?id=$acessoryId',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json; charset=utf-8",
+          },
+        ),
+        data: updateData,
+      );
+
+      if (res.statusCode == 200) {
+        return true;
+      } else {
+        print("⚠️ API trả về mã lỗi: ${res.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Lỗi cập nhật: $e");
+      return false;
+    }
+  }
+
+  //get acessory by id
+  Future<Acessory?> getAcessoryById(String acessoryId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+
+      String url = '/Acessory/Get Acessory By Id?id=$acessoryId';
+      print("📌 Gửi request đến API: $url");
+
+      Response res = await api.sendRequest.get(
+        url,
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      print("📌 API trả về: ${res.data}"); // Debug dữ liệu gốc
+
+      if (res.statusCode == 200 && res.data != null) {
+        Acessory acessory = Acessory.fromJson(res.data);
+        print("📌 Acessory nhận từ API: ${acessory.acessoryName}");
+        return acessory;
+      } else {
+        throw Exception('⚠️ Không thể lấy phụ kiện.');
+      }
+    } catch (e) {
+      print('❌ Lỗi khi lấy phụ kiện: $e');
+      return null;
     }
   }
 }

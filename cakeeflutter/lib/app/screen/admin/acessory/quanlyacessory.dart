@@ -1,24 +1,25 @@
+import 'package:cakeeflutter/app/model/acessory.dart';
+import 'package:cakeeflutter/app/screen/admin/acessory/acessory_details.dart';
 import 'package:cakeeflutter/app/screen/admin/category/category_details.dart';
 import 'package:flutter/material.dart';
-import 'package:cakeeflutter/app/model/category.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/api_service.dart';
 
-class QuanLyCategory extends StatefulWidget {
+class QuanLyAcessory extends StatefulWidget {
   @override
-  _QuanLyCategoryState createState() => _QuanLyCategoryState();
+  _QuanLyAcessoryState createState() => _QuanLyAcessoryState();
 }
 
-class _QuanLyCategoryState extends State<QuanLyCategory> {
-  late Future<List<Category>> _futureCategories = Future.value([]);
+class _QuanLyAcessoryState extends State<QuanLyAcessory> {
+  late Future<List<Acessory>> _futureAcessories = Future.value([]);
 
   @override
   void initState() {
     super.initState();
-    _loadCategories();
+    _loadAcessories();
   }
 
-  void _loadCategories() async {
+  void _loadAcessories() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString('userId');
 
@@ -30,11 +31,11 @@ class _QuanLyCategoryState extends State<QuanLyCategory> {
     print("📌 Gọi API lấy danh mục với userId: $userId");
 
     setState(() {
-      _futureCategories = APIRepository().getCategoryByUserID(userId);
+      _futureAcessories = APIRepository().fetchAcessoriesByUserId(userId);
     });
   }
 
-  void _confirmDeleteCategory(String categoryId) {
+  void _confirmDeleteAcessory(String acessoryId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -49,7 +50,7 @@ class _QuanLyCategoryState extends State<QuanLyCategory> {
               Text("Xác nhận xóa"),
             ],
           ),
-          content: Text("Bạn có chắc chắn muốn xóa danh mục này không?"),
+          content: Text("Bạn có chắc chắn muốn xóa phụ kiện này không?"),
           actions: [
             TextButton(
               child: Text("Hủy", style: TextStyle(color: Colors.grey)),
@@ -59,7 +60,7 @@ class _QuanLyCategoryState extends State<QuanLyCategory> {
               child: Text("Xóa", style: TextStyle(color: Colors.red)),
               onPressed: () {
                 Navigator.of(context).pop();
-                _deleteCategory(categoryId);
+                _deleteAcessory(acessoryId);
               },
             ),
           ],
@@ -68,7 +69,7 @@ class _QuanLyCategoryState extends State<QuanLyCategory> {
     );
   }
 
-  void _deleteCategory(String categoryId) async {
+  void _deleteAcessory(String acessoryId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString('userId');
 
@@ -79,60 +80,43 @@ class _QuanLyCategoryState extends State<QuanLyCategory> {
       return;
     }
 
-    bool success = await APIRepository().deleteCategory(categoryId);
+    bool success = await APIRepository().deleteAcessory(acessoryId);
     if (success) {
       setState(() {
-        _futureCategories = APIRepository().getCategoryByUserID(userId);
+        _futureAcessories = APIRepository().fetchAcessoriesByUserId(userId);
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("✅ Xóa danh mục thành công")),
+        SnackBar(content: Text("✅ Xóa phụ kiện thành công")),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Xóa danh mục thất bại")),
+        SnackBar(content: Text("❌ Xóa phụ kiện thất bại")),
       );
     }
   }
-
-  void _addOrUpdateCategory([String? categoryId]) async {
-  bool? updated = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => CategoryDetailScreen(categoryId: categoryId ?? ''),
-    ),
-  );
-
-  if (updated == true) {
-    _loadCategories();
-  }
-}
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Quản Lý Category'),
-        backgroundColor: Colors.amber,
-      ),
-      body: FutureBuilder<List<Category>>(
-        future: _futureCategories,
+          title: Text('Quản Lý Phụ Kiện'), backgroundColor: Colors.amber),
+      body: FutureBuilder<List<Acessory>>(
+        future: _futureAcessories,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text("Lỗi: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text("Chưa có danh mục nào"));
+            return Center(child: Text("Chưa có phụ kiện nào"));
           }
 
-          List<Category> categories = snapshot.data!;
+          List<Acessory> acessories = snapshot.data!;
 
           return ListView.builder(
-            itemCount: categories.length,
+            itemCount: acessories.length,
             itemBuilder: (context, index) {
-              final category = categories[index];
+              final acessory = acessories[index];
 
               return Card(
                 elevation: 4,
@@ -141,20 +125,34 @@ class _QuanLyCategoryState extends State<QuanLyCategory> {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: ListTile(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: CircleAvatar(
                     backgroundColor: Colors.amber.shade100,
-                    child: Icon(Icons.category, color: Colors.amber.shade700),
+                    child: Icon(Icons.pan_tool, color: Colors.amber.shade700),
                   ),
                   title: Text(
-                    category.categoryName ?? "Không có tên",
+                    acessory.acessoryName.toString() ?? "Không có tên",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _confirmDeleteCategory(category.id),
+                    onPressed: () => _confirmDeleteAcessory(acessory.id),
                   ),
-                  onTap: () => _addOrUpdateCategory(category.id),
+                  onTap: () async {
+                    bool? updated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            AcessoryDetailScreen(acessoryId: acessory.id),
+                      ),
+                    );
+
+                    // Nếu phụ kiện được cập nhật, load lại danh sách
+                    if (updated == true) {
+                      _loadAcessories();
+                    }
+                  },
                 ),
               );
             },
@@ -162,7 +160,7 @@ class _QuanLyCategoryState extends State<QuanLyCategory> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addOrUpdateCategory(),
+        onPressed: () {},
         child: Icon(Icons.add),
         backgroundColor: Colors.amber,
       ),

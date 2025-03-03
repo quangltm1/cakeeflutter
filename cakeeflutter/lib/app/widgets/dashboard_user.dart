@@ -62,7 +62,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color.fromARGB(255, 87, 221, 91),
+        selectedItemColor: const Color(0xFFFFD900),
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         onTap: _onItemTapped,

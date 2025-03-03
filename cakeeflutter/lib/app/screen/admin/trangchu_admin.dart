@@ -9,7 +9,7 @@ class TrangChuAdmin extends StatefulWidget {
 }
 
 class _TrangChuAdminState extends State<TrangChuAdmin> {
-  String fullName = "Đang tải..."; // Giá trị mặc định
+  String fullName = "Đang tải...";
   APIRepository apiRepository = APIRepository();
 
   @override
@@ -46,11 +46,11 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min, // Ngăn lỗi tràn màn hình
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Header với tên người dùng động
+              // Header
               Container(
-                padding: EdgeInsets.all(20),
+                padding: EdgeInsets.symmetric(vertical: 20),
                 decoration: BoxDecoration(
                   color: Color(0xFFFFD900),
                   borderRadius: BorderRadius.only(
@@ -59,71 +59,77 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
                   ),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Xin chào, $fullName', // Hiển thị fullName lấy từ API
-                      style: TextStyle(
-                          color: const Color.fromARGB(255, 0, 0, 0),
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Xin chào, $fullName',
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            'Cakee',
+                            style: TextStyle(color: Colors.black, fontSize: 16),
+                          ),
+                        ],
+                      ),
                     ),
-                    Text(
-                      'Cakee',
-                      style: TextStyle(
-                          color: const Color.fromARGB(255, 0, 0, 0),
-                          fontSize: 16),
+                    Padding(
+                      padding: EdgeInsets.all(16),
+                      child: GridView.count(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 2.5,
+                        children: [
+                          _buildStatCard('Đơn hoàn thành', '0',
+                              Icons.shopping_cart, Colors.green),
+                          _buildStatCard('Đơn chưa xong', '0',
+                              Icons.pending_actions, Colors.orange),
+                          _buildStatCard('Doanh thu', '0 đ', Icons.attach_money,
+                              Colors.blue),
+                          _buildStatCard('Khách hàng đã mua', '0',
+                              Icons.people, Colors.red),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              // Thống kê
+              // Danh sách chức năng
               Padding(
-                padding: EdgeInsets.all(10),
-                child: GridView.count(
-                  shrinkWrap: true, // Ngăn lỗi tràn màn hình
-                  physics: NeverScrollableScrollPhysics(), // Vô hiệu hóa cuộn riêng
-                  crossAxisCount: 2,
-                  childAspectRatio: 2.5,
-                  children: [
-                    _buildStatCard('Đơn hàng đã bán', '0', Icons.shopping_cart),
-                    _buildStatCard('Doanh thu bán hàng', '0 đ', Icons.monetization_on),
-                    _buildStatCard('Khách đã mua hàng', '0', Icons.people),
-                    _buildStatCard('Công nợ khách hàng', '0 đ', Icons.receipt),
-                  ],
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.9,
+                  ),
+                  itemCount: features.length,
+                  itemBuilder: (context, index) {
+                    return _buildFeatureButton(
+                      features[index]["title"]!,
+                      features[index]["icon"]!,
+                      features[index]["color"]!,
+                      () {
+                        Navigator.pushNamed(context, features[index]["route"]!);
+                      },
+                    );
+                  },
                 ),
               ),
 
-              // Chức năng
-              Padding(
-                padding: EdgeInsets.all(10),
-                child: GridView.count(
-                  shrinkWrap: true, // Ngăn lỗi tràn màn hình
-                  physics: NeverScrollableScrollPhysics(), // Vô hiệu hóa cuộn riêng
-                  crossAxisCount: 3,
-                  childAspectRatio: 1,
-                  children: [
-                    _buildFeatureButton('Bánh', Icons.shopping_bag, Colors.blue, () {
-                      Navigator.pushNamed(context, '/cake'); // Chuyển đến màn hình sản phẩm
-                    }),
-                    _buildFeatureButton('Danh mục bánh', Icons.category, Colors.green, () {
-                      Navigator.pushNamed(context, '/danh-muc'); // Chuyển đến màn hình khách hàng
-                    }),
-                    _buildFeatureButton('Đơn hàng', Icons.receipt, Colors.red, () {
-                      Navigator.pushNamed(context, '/don-hang'); // Chuyển đến màn hình đơn hàng
-                    }),
-                    _buildFeatureButton('Báo cáo', Icons.bar_chart, Colors.blue, () {
-                      Navigator.pushNamed(context, '/bao-cao'); // Chuyển đến màn hình báo cáo
-                    }),
-                    _buildFeatureButton('Kho hàng', Icons.store, Colors.orange, () {
-                      Navigator.pushNamed(context, '/kho-hang'); // Chuyển đến màn hình kho hàng
-                    }),
-                  ],
-                ),
-              ),
-
-              // Thêm khoảng trống cuối để tránh lỗi tràn
               SizedBox(height: 20),
             ],
           ),
@@ -132,16 +138,32 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, color: Color(0xFFFFD900)),
-            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            CircleAvatar(
+              backgroundColor: color.withOpacity(0.2),
+              child: Icon(icon, color: color),
+            ),
+            SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                Text(value,
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
           ],
         ),
       ),
@@ -149,19 +171,42 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
   }
 
   Widget _buildFeatureButton(
-      String title, IconData icon, Color color, VoidCallback onPress) {
+      String title, IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
-      onTap: onPress, // Bắt sự kiện nhấn vào
-      child: Column(
-        children: [
-          CircleAvatar(
-            backgroundColor: color.withOpacity(0.2),
-            child: Icon(icon, color: color),
-          ),
-          SizedBox(height: 5),
-          Text(title, style: TextStyle(fontSize: 12)),
-        ],
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 2)),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: color.withOpacity(0.2),
+              child: Icon(icon, size: 28, color: color),
+            ),
+            SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  final List<Map<String, dynamic>> features = [
+    {"title": "Bánh", "icon": Icons.cake, "color": Colors.blue, "route": "/cake"},
+    {"title": "Danh mục", "icon": Icons.category, "color": Colors.green, "route": "/danh-muc"},
+    {"title": "Phụ kiện", "icon": Icons.pan_tool, "color": Colors.red, "route": "/phu-kien"},
+    {"title": "Size Bánh", "icon": Icons.format_size, "color": Colors.blue, "route": "/size-banh"},
+    {"title": "Kho hàng", "icon": Icons.store, "color": Colors.orange, "route": "/kho-hang"},
+  ];
 }
