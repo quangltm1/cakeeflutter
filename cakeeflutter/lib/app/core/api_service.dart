@@ -312,36 +312,35 @@ class APIRepository {
   }
 
   Future<bool> deleteCategory(String categoryId) async {
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
 
-    if (token == null) {
-      print("❌ Token không tồn tại!");
+      if (token == null) {
+        print("❌ Token không tồn tại!");
+        return false;
+      }
+
+      print("🗑 Gửi yêu cầu xóa danh mục ID: $categoryId");
+
+      Response res = await api.sendRequest.delete(
+        '/Category/Delete Category?id=$categoryId',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      print("📌 Phản hồi từ server: ${res.statusCode} - ${res.data}");
+
+      return res.statusCode == 200;
+    } catch (e) {
+      print("❌ Lỗi xóa danh mục: $e");
       return false;
     }
-
-    print("🗑 Gửi yêu cầu xóa danh mục ID: $categoryId");
-
-    Response res = await api.sendRequest.delete(
-      '/Category/Delete Category?id=$categoryId',
-      options: Options(
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      ),
-    );
-
-    print("📌 Phản hồi từ server: ${res.statusCode} - ${res.data}");
-
-    return res.statusCode == 200;
-  } catch (e) {
-    print("❌ Lỗi xóa danh mục: $e");
-    return false;
   }
-}
-
 
   Future<bool> createCake(Map<String, dynamic> cakeData) async {
     try {
@@ -414,40 +413,39 @@ class APIRepository {
   }
 
   Future<bool> addCategory(String categoryName) async {
-  try {
-    String? token = await _getToken();
-    String? userId = await _getUserId(); // Lấy userId từ SharedPreferences
+    try {
+      String? token = await _getToken();
+      String? userId = await _getUserId(); // Lấy userId từ SharedPreferences
 
-    if (userId == null) {
-      print("❌ Lỗi: Không tìm thấy userId.");
+      if (userId == null) {
+        print("❌ Lỗi: Không tìm thấy userId.");
+        return false;
+      }
+
+      Response res = await api.sendRequest.post(
+        '/Category/Create Category',
+        options: Options(headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        }),
+        data: {
+          "categoryName": categoryName,
+          "userId": userId,
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        print("✅ Tạo danh mục thành công: ${res.data}");
+        return true;
+      } else {
+        print("❌ API trả về lỗi: ${res.statusCode} - ${res.data}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Lỗi API addCategory: $e");
       return false;
     }
-
-    Response res = await api.sendRequest.post(
-      '/Category/Create Category',
-      options: Options(headers: {
-        "Authorization": "Bearer $token",
-        "Content-Type": "application/json",
-      }),
-      data: {
-        "categoryName": categoryName,
-        "userId": userId,
-      },
-    );
-
-    if (res.statusCode == 200 || res.statusCode == 201) {
-      print("✅ Tạo danh mục thành công: ${res.data}");
-      return true;
-    } else {
-      print("❌ API trả về lỗi: ${res.statusCode} - ${res.data}");
-      return false;
-    }
-  } catch (e) {
-    print("❌ Lỗi API addCategory: $e");
-    return false;
   }
-}
-
 
   // 📌 Cập nhật danh mục
   Future<bool> updateCategory(String categoryId, String newCategoryName) async {
@@ -503,6 +501,40 @@ class APIRepository {
     }
   }
 
+  //Create Acessory
+  Future<bool> createAcessory(String name, double price, String userId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+      if (token == null) {
+        throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+
+      Response res = await APIRepository().api.sendRequest.post(
+        '/Acessory/Create Acessory',
+        options: Options(headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        }),
+        data: {
+          "acessoryName": name,
+          "acessoryPrice": price,
+          "userId": userId,
+        },
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        print("✅ Tạo Acessory thành công: \${res.data}");
+        return true;
+      } else {
+        print("❌ API trả về lỗi: \${res.statusCode} - \${res.data}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Lỗi API createAcessory: \$e");
+      return false;
+    }
+  }
   //Delete Acessory
   Future<bool> deleteAcessory(String acessoryId) async {
     try {
@@ -535,7 +567,7 @@ class APIRepository {
 
   //Update Acessory
   Future<bool> updateAcessory(
-      String acessoryId, Map<String, dynamic> updateData) async {
+      String acessoryId, String name, double price) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
@@ -544,25 +576,29 @@ class APIRepository {
         throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
       }
 
+      // Tạo URL với query parameters
+      String url =
+          '/Acessory/UpdateAccessory?id=$acessoryId&name=$name&price=$price';
+
       Response res = await api.sendRequest.patch(
-        '/Acessory/Update Acessory?id=$acessoryId',
+        url,
         options: Options(
           headers: {
             "Authorization": "Bearer $token",
-            "Content-Type": "application/json; charset=utf-8",
+            "Content-Type": "application/json",
           },
         ),
-        data: updateData,
       );
 
       if (res.statusCode == 200) {
+        print("✅ Cập nhật phụ kiện thành công!");
         return true;
       } else {
-        print("⚠️ API trả về mã lỗi: ${res.statusCode}");
+        print("⚠️ API trả về mã lỗi: ${res.statusCode} - ${res.data}");
         return false;
       }
     } catch (e) {
-      print("❌ Lỗi cập nhật: $e");
+      print("❌ Lỗi cập nhật phụ kiện: $e");
       return false;
     }
   }

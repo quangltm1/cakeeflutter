@@ -46,7 +46,7 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
               Container(
@@ -59,6 +59,7 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
                   ),
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20),
@@ -68,65 +69,78 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
                           Text(
                             'Xin chào, $fullName',
                             style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold),
+                              color: Colors.black,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           Text(
                             'Cakee',
-                            style: TextStyle(color: Colors.black, fontSize: 16),
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    SizedBox(height: 16),
                     Padding(
-                      padding: EdgeInsets.all(16),
-                      child: GridView.count(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 2.5,
-                        children: [
-                          _buildStatCard('Đơn hoàn thành', '0',
-                              Icons.shopping_cart, Colors.green),
-                          _buildStatCard('Đơn chưa xong', '0',
-                              Icons.pending_actions, Colors.orange),
-                          _buildStatCard('Doanh thu', '0 đ', Icons.attach_money,
-                              Colors.blue),
-                          _buildStatCard('Khách hàng đã mua', '0',
-                              Icons.people, Colors.red),
-                        ],
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: SizedBox(
+                        height: 150, // Giới hạn chiều cao GridView
+                        child: GridView.count(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 2.5,
+                          children: [
+                            _buildStatCard('Đơn hoàn thành', '0',
+                                 Colors.green),
+                            _buildStatCard('Đơn chưa xong', '0',
+                                 Colors.orange),
+                            _buildStatCard('Doanh thu', '0 đ', 
+                                Colors.blue),
+                            _buildStatCard('Khách hàng đã mua', '0',
+                                 Colors.red),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
 
+              SizedBox(height: 16),
+
               // Danh sách chức năng
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.9,
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  height: 250, // Giới hạn chiều cao GridView
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.9,
+                    ),
+                    itemCount: features.length,
+                    itemBuilder: (context, index) {
+                      return _buildFeatureButton(
+                        features[index]["title"]!,
+                        features[index]["icon"]!,
+                        features[index]["color"]!,
+                        () {
+                          Navigator.pushNamed(context, features[index]["route"]!);
+                        },
+                      );
+                    },
                   ),
-                  itemCount: features.length,
-                  itemBuilder: (context, index) {
-                    return _buildFeatureButton(
-                      features[index]["title"]!,
-                      features[index]["icon"]!,
-                      features[index]["color"]!,
-                      () {
-                        Navigator.pushNamed(context, features[index]["route"]!);
-                      },
-                    );
-                  },
                 ),
               ),
 
@@ -139,7 +153,7 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
   }
 
   Widget _buildStatCard(
-      String title, String value, IconData icon, Color color) {
+      String title, String value, Color color) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
@@ -148,21 +162,21 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            CircleAvatar(
-              backgroundColor: color.withOpacity(0.2),
-              child: Icon(icon, color: color),
-            ),
             SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                Text(value,
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
+            Expanded( // Để tránh lỗi tràn ngang
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis), // Tránh lỗi tràn
+                  Text(value,
+                      style: TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis), // Tránh lỗi tràn
+                ],
+              ),
             ),
           ],
         ),
@@ -195,6 +209,7 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
               title,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis, // Tránh lỗi tràn
             ),
           ],
         ),

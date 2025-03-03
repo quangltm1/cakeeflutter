@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cakeeflutter/app/model/acessory.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/api_service.dart';
 
 class AcessoryDetailScreen extends StatefulWidget {
-  final String acessoryId;
+  final String? acessoryId;
 
-  AcessoryDetailScreen({required this.acessoryId});
+  AcessoryDetailScreen({this.acessoryId});
 
   @override
   _AcessoryDetailScreenState createState() => _AcessoryDetailScreenState();
@@ -13,130 +14,92 @@ class AcessoryDetailScreen extends StatefulWidget {
 
 class _AcessoryDetailScreenState extends State<AcessoryDetailScreen> {
   Acessory? _acessory;
-  bool _isLoading = true;
+  bool _isLoading = false;
   TextEditingController _acessoryNameController = TextEditingController();
   TextEditingController _acessoryPriceController = TextEditingController();
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
-    _acessoryNameController = TextEditingController(); // Khởi tạo controller
-    _acessoryPriceController = TextEditingController(); // Khởi tạo controller
-    _fetchAcessory(); // Gọi _fetchAcessory khi khởi tạo
+    _loadUserId();
+    if (widget.acessoryId != null) {
+      _fetchAcessory();
+    }
+  }
+
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getString('userId');
+    });
   }
 
   Future<void> _fetchAcessory() async {
-    try {
-      print("📌 Gọi API lấy phụ kiện với acessoryId: ${widget.acessoryId}");
-
-      var acessory = await APIRepository().getAcessoryById(widget.acessoryId);
-
-      if (acessory != null) {
-        print("📌 Acessory nhận từ API: ${acessory.acessoryName}");
-        setState(() {
-          _acessory = acessory; // Cập nhật trạng thái _acessory
-          _acessoryNameController.text = acessory.acessoryName.toString() ?? "Không có tên";
-          _acessoryPriceController.text = acessory.acessoryPrice.toString(); // Hiển thị giá trị số nguyên
-          _isLoading = false; // Cập nhật trạng thái _isLoading
-        });
-      } else {
-        print("⚠️ Không tìm thấy phụ kiện!");
-        setState(() {
-          _acessory = null; // Cập nhật trạng thái _acessory
-          _acessoryNameController.text = "Không tìm thấy";
-          _isLoading = false; // Cập nhật trạng thái _isLoading
-        });
-      }
-    } catch (error) {
-      print("❌ Lỗi khi lấy phụ kiện: $error");
+    setState(() => _isLoading = true);
+    var acessory = await APIRepository().getAcessoryById(widget.acessoryId!);
+    if (acessory != null) {
       setState(() {
-        _isLoading = false; // Cập nhật trạng thái _isLoading
+        _acessory = acessory;
+        _acessoryNameController.text = acessory.acessoryName;
+        _acessoryPriceController.text = acessory.acessoryPrice.toString();
       });
     }
+    setState(() => _isLoading = false);
   }
 
-  void _updateAcessory() async {
-    if (_acessory == null) return;
+  void _saveAcessory() async {
+    String name = _acessoryNameController.text.trim();
+    double? price = double.tryParse(_acessoryPriceController.text.trim());
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    bool success = await APIRepository().updateAcessory(
-  widget.acessoryId,
-  {
-    "acessoryName": _acessoryNameController.text,
-    "acessoryPrice": double.tryParse(_acessoryPriceController.text) ?? 0.0,
-  },
-);
-
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (success) {
+    if (name.isEmpty || price == null || _userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("✅ Cập nhật thành công")),
+        SnackBar(content: Text("⚠️ Vui lòng nhập đầy đủ thông tin")),
       );
-
-      Navigator.pop(context, true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Cập nhật thất bại")),
-      );
+      return;
     }
+
+    setState(() => _isLoading = true);
+    bool success;
+
+    if (widget.acessoryId != null) {
+      success = await APIRepository().updateAcessory(widget.acessoryId!, name, price);
+    } else {
+      success = await APIRepository().createAcessory(name, price, _userId!);
+    }
+
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(success ? "✅ Thành công" : "❌ Thất bại")),
+    );
+
+    if (success) Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Chi Tiết Phụ Kiện')),
+      appBar: AppBar(title: Text(widget.acessoryId == null ? 'Thêm Phụ Kiện' : 'Chi Tiết Phụ Kiện')),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
-          : _acessory == null
-              ? Center(child: Text("Không tìm thấy phụ kiện"))
-              : Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Tên phụ kiện:",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 8),
-                      TextField(
-                        controller: _acessoryNameController,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: "Nhập tên phụ kiện",
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        "Giá phụ kiện:",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 8),
-                      TextField(
-                        controller: _acessoryPriceController,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: "Nhập giá phụ kiện",
-                        ),
-                        keyboardType: TextInputType.number, // Đặt bàn phím số
-                      ),
-                      SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _updateAcessory,
-                        child: Text("Cập nhật"),
-                      ),
-                    ],
-                  ),
-                ),
+          : Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Tên phụ kiện:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  TextField(controller: _acessoryNameController, decoration: InputDecoration(border: OutlineInputBorder())),
+                  SizedBox(height: 16),
+                  Text("Giá phụ kiện:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  TextField(controller: _acessoryPriceController, keyboardType: TextInputType.number, decoration: InputDecoration(border: OutlineInputBorder())),
+                  SizedBox(height: 16),
+                  ElevatedButton(onPressed: _saveAcessory, child: Text(widget.acessoryId == null ? "Tạo mới" : "Cập nhật")),
+                ],
+              ),
+            ),
     );
   }
 }

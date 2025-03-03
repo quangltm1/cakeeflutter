@@ -1,9 +1,8 @@
-import 'package:cakeeflutter/app/model/acessory.dart';
-import 'package:cakeeflutter/app/screen/admin/acessory/acessory_details.dart';
-import 'package:cakeeflutter/app/screen/admin/category/category_details.dart';
 import 'package:flutter/material.dart';
+import 'package:cakeeflutter/app/model/acessory.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/api_service.dart';
+import 'acessory_details.dart';
 
 class QuanLyAcessory extends StatefulWidget {
   @override
@@ -29,7 +28,6 @@ class _QuanLyAcessoryState extends State<QuanLyAcessory> {
     }
 
     print("📌 Gọi API lấy danh mục với userId: $userId");
-
     setState(() {
       _futureAcessories = APIRepository().fetchAcessoriesByUserId(userId);
     });
@@ -40,9 +38,7 @@ class _QuanLyAcessoryState extends State<QuanLyAcessory> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Row(
             children: [
               Icon(Icons.warning, color: Colors.red),
@@ -95,11 +91,23 @@ class _QuanLyAcessoryState extends State<QuanLyAcessory> {
     }
   }
 
+  void _addOrUpdateAcessory([String? acessoryId]) async {
+    bool? updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AcessoryDetailScreen(acessoryId: acessoryId),
+      ),
+    );
+
+    if (updated == true) {
+      _loadAcessories();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: Text('Quản Lý Phụ Kiện'), backgroundColor: Colors.amber),
+      appBar: AppBar(title: Text('Quản Lý Phụ Kiện'), backgroundColor: Colors.amber),
       body: FutureBuilder<List<Acessory>>(
         future: _futureAcessories,
         builder: (context, snapshot) {
@@ -112,47 +120,29 @@ class _QuanLyAcessoryState extends State<QuanLyAcessory> {
           }
 
           List<Acessory> acessories = snapshot.data!;
-
           return ListView.builder(
             itemCount: acessories.length,
             itemBuilder: (context, index) {
               final acessory = acessories[index];
-
               return Card(
                 elevation: 4,
                 margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 child: ListTile(
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: CircleAvatar(
                     backgroundColor: Colors.amber.shade100,
                     child: Icon(Icons.pan_tool, color: Colors.amber.shade700),
                   ),
                   title: Text(
-                    acessory.acessoryName.toString() ?? "Không có tên",
+                    acessory.acessoryName.toString(),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _confirmDeleteAcessory(acessory.id),
                   ),
-                  onTap: () async {
-                    bool? updated = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AcessoryDetailScreen(acessoryId: acessory.id),
-                      ),
-                    );
-
-                    // Nếu phụ kiện được cập nhật, load lại danh sách
-                    if (updated == true) {
-                      _loadAcessories();
-                    }
-                  },
+                  onTap: () => _addOrUpdateAcessory(acessory.id),
                 ),
               );
             },
@@ -160,7 +150,7 @@ class _QuanLyAcessoryState extends State<QuanLyAcessory> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => _addOrUpdateAcessory(),
         child: Icon(Icons.add),
         backgroundColor: Colors.amber,
       ),
