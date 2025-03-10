@@ -114,7 +114,7 @@ class _QuanLyAcessoryState extends State<QuanLyAcessory> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text("Lỗi: ${snapshot.error}"));
+            return Center(child: Text("Chưa có phụ kiện nào"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(child: Text("Chưa có phụ kiện nào"));
           }
