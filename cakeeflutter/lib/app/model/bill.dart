@@ -1,47 +1,52 @@
-class BillModel {
-    String id;
-    String fullName;
-    String dateCreated;
-    int total;
+class Bill {
+  String id;
+  String customName;
+  String address;
+  String deliveryDate;
+  int deposit;
+  String note;
+  String receiveDate;
+  int status;
+  int total;
+  String cakeContent;
+  String cakeName;
+  int cakeSize;
+  String accessory;
+  int quantity;
 
-    BillModel({
-        required this.id,
-        required this.fullName,
-        required this.dateCreated,
-        required this.total,
-    });
+  Bill({
+    required this.id,
+    required this.customName,
+    required this.address,
+    required this.deliveryDate,
+    required this.deposit,
+    required this.note,
+    required this.receiveDate,
+    required this.status,
+    required this.total,
+    required this.cakeContent,
+    required this.cakeName,
+    required this.cakeSize,
+    required this.accessory,
+    required this.quantity,
+  });
 
-    factory BillModel.fromJson(Map<String, dynamic> json) => BillModel(
-        id: json["id"],
-        fullName: json["fullName"],
-        dateCreated: json["dateCreated"],
-        total: json["total"],
+  factory Bill.fromJson(Map<String, dynamic> json) {
+    return Bill(
+      id: json['id'] ?? "", // Tránh lỗi Null
+      customName: json['customName'] ?? "Khách hàng", 
+      address: json['address'] ?? "Chưa có địa chỉ",
+      deliveryDate: json['deliveryDate'] ?? "0000-00-00", 
+      deposit: json['deposit'] ?? 0,
+      note: json['note'] ?? "",
+      receiveDate: json['receiveDate'] ?? "0000-00-00",
+      status: json['status'] ?? 0,
+      total: json['total'] ?? 0,
+      cakeContent: json['cakeContent'] ?? "Không có nội dung",
+      cakeName: json['cakeName'] ?? "Không có tên bánh",
+      cakeSize: json['cakeSize'] ?? 0,
+      accessory: json['accessory'] ?? "Không có phụ kiện",
+      quantity: json['quantity'] ?? 1,
     );
-}
-class BillDetailModel {
-    int productId;
-    String productName;
-    dynamic imageUrl;
-    int price;
-    int count;
-    int total;
-
-    BillDetailModel({
-        required this.productId,
-        required this.productName,
-        required this.imageUrl,
-        required this.price,
-        required this.count,
-        required this.total,
-    });
-
-    factory BillDetailModel.fromJson(Map<String, dynamic> json) => BillDetailModel(
-        productId: json["productID"] ?? 0,
-        productName: json["productName"] ?? "",
-        imageUrl: json["imageURL"] ?? "",
-        price: json["price"] ?? 0,
-        count: json["count"] ?? 0,
-        total: json["total"] ?? 0,
-    );
-
+  }
 }
