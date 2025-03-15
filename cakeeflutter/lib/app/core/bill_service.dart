@@ -17,10 +17,10 @@ class BillService {
       }
 
       final response = await _dio.get(
-        "$baseUrl/GetBillByCustomId",
-        queryParameters: {"id": customerId},
-        options: Options(headers: {"Authorization": "Bearer $token"}),
-      );
+  "$baseUrl/GetBillByCustomId/$customerId",  // Đưa customerId vào URL
+  options: Options(headers: {"Authorization": "Bearer $token"}),
+);
+
 
       if (response.statusCode == 200) {
         if (response.data == null || response.data.isEmpty) {

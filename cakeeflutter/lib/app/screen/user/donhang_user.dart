@@ -39,30 +39,33 @@ class _DonHangPageState extends State<DonHangPage> with SingleTickerProviderStat
   }
 
   Future<void> _loadBills() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      String? customerId = prefs.getString("userId");
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    String? customerId = prefs.getString("userId");
 
-      if (customerId == null || customerId.isEmpty) {
-        throw Exception("User ID không tồn tại");
-      }
-
-      final fetchedOrders = await _billService.getBillOfCustom(customerId);
-
-      if (!mounted) return;
-
-      setState(() {
-        orders = fetchedOrders;
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        isLoading = false;
-      });
-      print("Lỗi khi tải đơn hàng: $e");
+    if (customerId == null || customerId.isEmpty) {
+      throw Exception("User ID không tồn tại");
     }
+
+    print("Customer ID: $customerId");  // Debugging the customer ID
+
+    final fetchedOrders = await _billService.getBillOfCustom(customerId);
+
+    if (!mounted) return;
+
+    setState(() {
+      orders = fetchedOrders;
+      isLoading = false;
+    });
+  } catch (e) {
+    if (!mounted) return;
+    setState(() {
+      isLoading = false;
+    });
+    print("Lỗi khi tải đơn hàng: $e");
   }
+}
+
 
   List<Bill> getOrdersByStatus(int status) {
     return orders.where((order) => order.status == status).toList();
