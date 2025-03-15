@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import '../model/cart_item.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../model/cart_item.dart';
 
 class CartService {
   final Dio _dio = Dio();
@@ -11,27 +11,36 @@ class CartService {
     return prefs.getString('token');
   }
 
+  /// 🛒 **Lấy giỏ hàng**
   Future<List<CartItem>> getCart() async {
-    try {
-      String? token = await _getToken();
-      if (token == null) throw Exception("Chưa đăng nhập");
+  try {
+    String? token = await _getToken();
+    if (token == null) throw Exception("Chưa đăng nhập");
 
-      Response response = await _dio.get(
-        "$baseUrl/GetCart",
-        options: Options(headers: {"Authorization": "Bearer $token"}),
-      );
+    Response response = await _dio.get(
+      "$baseUrl/GetCart",
+      options: Options(headers: {"Authorization": "Bearer $token"}),
+    );
 
-      List<CartItem> cart = (response.data as List)
+    print("🔍 API response: ${response.data}"); // Debug API response
+
+    if (response.data is Map<String, dynamic> && response.data.containsKey('items')) {
+      return (response.data['items'] as List)
           .map((item) => CartItem.fromJson(item))
           .toList();
-
-      return cart;
-    } catch (e) {
-      print("Lỗi lấy giỏ hàng: $e");
-      return [];
+    } else {
+      throw Exception("Dữ liệu giỏ hàng không hợp lệ!");
     }
+  } catch (e) {
+    print("❌ Lỗi lấy giỏ hàng: $e");
+    return [];
   }
+}
 
+
+
+
+  /// ➕ **Thêm sản phẩm vào giỏ hàng**
   Future<void> addToCart(CartItem item) async {
     try {
       String? token = await _getToken();
@@ -43,10 +52,11 @@ class CartService {
         options: Options(headers: {"Authorization": "Bearer $token"}),
       );
     } catch (e) {
-      print("Lỗi thêm giỏ hàng: $e");
+      print("❌ Lỗi thêm vào giỏ hàng: $e");
     }
   }
 
+  /// ❌ **Xóa sản phẩm khỏi giỏ hàng**
   Future<void> removeFromCart(String productId) async {
     try {
       String? token = await _getToken();
@@ -57,10 +67,11 @@ class CartService {
         options: Options(headers: {"Authorization": "Bearer $token"}),
       );
     } catch (e) {
-      print("Lỗi xóa sản phẩm khỏi giỏ hàng: $e");
+      print("❌ Lỗi xóa sản phẩm khỏi giỏ hàng: $e");
     }
   }
 
+  /// 🔄 **Cập nhật số lượng sản phẩm**
   Future<void> updateCartItem(CartItem item) async {
     try {
       String? token = await _getToken();
@@ -72,10 +83,11 @@ class CartService {
         options: Options(headers: {"Authorization": "Bearer $token"}),
       );
     } catch (e) {
-      print("Lỗi cập nhật giỏ hàng: $e");
+      print("❌ Lỗi cập nhật giỏ hàng: $e");
     }
   }
 
+  /// 🗑 **Xóa toàn bộ giỏ hàng**
   Future<void> clearCart() async {
     try {
       String? token = await _getToken();
@@ -86,7 +98,22 @@ class CartService {
         options: Options(headers: {"Authorization": "Bearer $token"}),
       );
     } catch (e) {
-      print("Lỗi xóa giỏ hàng: $e");
+      print("❌ Lỗi xóa giỏ hàng: $e");
+    }
+  }
+
+  /// ✅ **Thanh toán giỏ hàng**
+  Future<void> checkout() async {
+    try {
+      String? token = await _getToken();
+      if (token == null) throw Exception("Chưa đăng nhập");
+
+      await _dio.post(
+        "$baseUrl/Checkout",
+        options: Options(headers: {"Authorization": "Bearer $token"}),
+      );
+    } catch (e) {
+      print("❌ Lỗi thanh toán: $e");
     }
   }
 }

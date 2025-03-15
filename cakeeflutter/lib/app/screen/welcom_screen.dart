@@ -72,7 +72,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const UserHomeScreen()),
                 );
               },
               child: const Text('Bắt đầu', style: TextStyle(color: Color(0xFF000000))),

@@ -3,8 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../model/bill.dart'; // Import model Bill
 
 class BillService {
-  final Dio _dio = Dio();
-  final String baseUrl = "https://fitting-solely-fawn.ngrok-free.app/api/Bill";
+  static Dio _dio = Dio();
+  static String baseUrl = "https://fitting-solely-fawn.ngrok-free.app/api/Bill";
 
   // Get Bill of custom
   Future<List<Bill>> getBillOfCustom(String customerId) async {
@@ -38,6 +38,19 @@ class BillService {
     } catch (e) {
       print("🔴 Lỗi khi gọi API: $e");
       throw Exception("Error: $e");
+    }
+  }
+
+  static Future<bool> createBill(Map<String, dynamic> billData) async {
+    try {
+      Response response = await _dio.post(
+        "$baseUrl/CreateBill",
+        data: billData,
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("❌ Lỗi tạo đơn hàng: $e");
+      return false;
     }
   }
 }

@@ -1,21 +1,69 @@
+import 'package:cakeeflutter/app/screen/user/checkout_nologin_page.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CakeDetailPage extends StatelessWidget {
   final Map<String, dynamic> product;
 
   CakeDetailPage({required this.product});
 
+  /// 🛒 **Thêm vào giỏ hàng**
   void _addToCart(BuildContext context) {
-    // TODO: Gọi API hoặc cập nhật giỏ hàng trong app
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Đã thêm vào giỏ hàng!")),
     );
   }
 
-  void _buyNow(BuildContext context) {
-    // TODO: Chuyển sang trang đặt hàng
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Mua ngay thành công!")),
+  /// ⚡ **Xử lý Mua ngay**
+  void _buyNow(BuildContext context) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+
+  if (token == null) {
+    // Chuyển hướng đến `CheckoutPage` để nhập thông tin
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutNologinPage(product: product),
+      ),
+    );
+  } else {
+    // Tiến hành thanh toán ngay nếu đã đăng nhập
+    //_processOrder(context);
+  }
+}
+
+
+  /// ✅ **Hiển thị hộp thoại hỏi đăng nhập hay tiếp tục mua hàng**
+  void _showGuestCheckoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Bạn có muốn đăng nhập?"),
+        content: Text("Bạn có thể đăng nhập để lưu đơn hàng hoặc tiếp tục mua hàng mà không cần đăng nhập."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Đóng hộp thoại
+              // ✅ Điều hướng sang trang nhập thông tin đơn hàng
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CheckoutNologinPage(product: product),
+                ),
+              );
+            },
+            child: Text("Tiếp tục"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Đóng hộp thoại
+              Navigator.pushNamed(context, '/login'); // Chuyển đến trang đăng nhập
+            },
+            child: Text("Đăng nhập"),
+          ),
+        ],
+      ),
     );
   }
 
@@ -74,7 +122,6 @@ class CakeDetailPage extends StatelessWidget {
               ),
             ),
           ),
-          // 🛒 Thanh chứa nút "Thêm vào giỏ hàng" & "Mua ngay"
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             decoration: BoxDecoration(
