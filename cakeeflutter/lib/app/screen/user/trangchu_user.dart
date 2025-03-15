@@ -76,7 +76,7 @@ class _TrangChuUserPageState extends State<TrangChuUserPage> {
     return Scaffold(
       appBar: AppBar(
         title: _buildSearchBar(), 
-        backgroundColor: Color(0xFFFFD900),// 🔥 Đặt thanh tìm kiếm vào AppBar
+        backgroundColor: Color(0xFFFFD900),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
