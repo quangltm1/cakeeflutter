@@ -1,42 +1,40 @@
 class CartItem {
   final String productId;
-  final String cakeId;
-  final String accessoryId;
+  final String? cakeId;
+  final String? accessoryId;
   final int quantityCake;
   final int quantityAccessory;
   final double total;
-  final String imageUrl;
   final String name;
   final double price;
+  final String imageUrl;
 
   CartItem({
     required this.productId,
-    required this.cakeId,
-    required this.accessoryId,
+    this.cakeId,
+    this.accessoryId,
     required this.quantityCake,
     required this.quantityAccessory,
     required this.total,
-    required this.imageUrl,
     required this.name,
     required this.price,
+    required this.imageUrl,
   });
 
-  // ✅ Parse JSON từ API
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      productId: json['cakeId'] ?? json['accessoryId'] ?? '',
-      cakeId: json['cakeId'] ?? '',
-      accessoryId: json['accessoryId'] ?? '',
+      productId: json['cakeId']?.toString() ?? json['accessoryId']?.toString() ?? '',
+      cakeId: json['cakeId']?.toString(),
+      accessoryId: json['accessoryId']?.toString(),
       quantityCake: json['quantityCake'] ?? 0,
       quantityAccessory: json['quantityAccessory'] ?? 0,
       total: (json['total'] ?? 0).toDouble(),
-      imageUrl: json['imageUrl'] ?? 'https://via.placeholder.com/150',
-      name: json['name'] ?? 'Sản phẩm không có tên',
+      name: json['name'] ?? 'Không có tên',
       price: (json['price'] ?? 0).toDouble(),
+      imageUrl: json['imageUrl'] ?? 'https://via.placeholder.com/150',
     );
   }
 
-  // ✅ Convert sang JSON để gửi API
   Map<String, dynamic> toJson() {
     return {
       'cakeId': cakeId,

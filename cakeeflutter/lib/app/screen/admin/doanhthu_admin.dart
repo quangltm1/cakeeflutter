@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-class ThuChiAdmin extends StatelessWidget {
+class DoanhthuAdmin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Thu Chi', style: TextStyle(), textAlign: TextAlign.center),
+        title: Text('Doanh Thu', style: TextStyle(), textAlign: TextAlign.center),
         centerTitle: true,
         backgroundColor: Color(0xFFFFD900),
       ),
       backgroundColor: Color(0xFFFFFFFF),
       body: Center(
-        child: Text('Welcome to Thu Chi Admin Screen'),
+        child: Text('Welcome to Doanh Thu Admin Screen'),
       ),
     );
   }

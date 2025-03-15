@@ -1,44 +1,24 @@
-import 'dart:convert';
+import 'package:cakeeflutter/app/model/cart_item.dart';
 
-class Cart{
-  int productID;
-  String name;
-  dynamic price;
-  String img;
-  String des;
-  int count;
-  //constructor
-  Cart(
-      {required this.name, required this.price, required this.img, required this.des, required this.count, required this.productID});
+class Cart {
+  final String id;
+  final String userId;
+  final List<CartItem> items;
+  double totalPrice; // 🔹 Bỏ `final` để có thể cập nhật
 
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'price': price,
-      'img' : img,
-      'des' : des,
-      'count' : count,
-      'productID': productID
-    };
-  }
+  Cart({
+    required this.id,
+    required this.userId,
+    required this.items,
+    required this.totalPrice,
+  });
 
-  factory Cart.fromMap(Map<String, dynamic> map) {
+  factory Cart.fromJson(Map<String, dynamic> json) {
     return Cart(
-      productID: map['productID'] ?? 0,
-      name: map['name'] ?? '',
-      price: map['price'] ?? '',
-      img: map['img'] ?? '',
-      des: map['des'] ?? '',
-      count: map['count'] ?? 1
+      id: json['id'] ?? '',
+      userId: json['userId'] ?? '',
+      items: (json['items'] as List).map((item) => CartItem.fromJson(item)).toList(),
+      totalPrice: (json['totalPrice'] ?? 0).toDouble(),
     );
   }
-
-  String toJson() => json.encode(toMap());
-
-  factory Cart.fromJson(String source) =>
-      Cart.fromMap(json.decode(source));
-
-  @override
-  String toString() => 'Product(productID: $productID, name: $name, price: $price, img: $img, des: $des, count: $count)';
-
 }

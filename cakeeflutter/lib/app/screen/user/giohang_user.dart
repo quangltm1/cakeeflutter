@@ -22,90 +22,90 @@ class _CartPageState extends State<CartPage> {
     final cartProvider = context.watch<CartProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: Text("Giỏ hàng (${cartProvider.totalItems})")),
+      appBar: AppBar(
+        title: Text("Giỏ hàng (${cartProvider.totalItems})"),
+        centerTitle: true,
+        backgroundColor: Colors.amber,
+      ),
       body: cartProvider.isLoading
           ? Center(child: CircularProgressIndicator())
-          : cartProvider.cartItems.isEmpty
-              ? Center(child: Text("Giỏ hàng trống"))
+          : cartProvider.cart == null || cartProvider.cart!.items.isEmpty
+              ? Center(child: Text("🛒 Giỏ hàng trống"))
               : ListView.builder(
-                  itemCount: cartProvider.cartItems.length,
+                  itemCount: cartProvider.cart!.items.length,
                   itemBuilder: (context, index) {
-                    final item = cartProvider.cartItems[index];
+                    final item = cartProvider.cart!.items[index];
                     return _buildCartItem(cartProvider, item);
                   },
                 ),
-      bottomNavigationBar: cartProvider.cartItems.isEmpty
+      bottomNavigationBar: cartProvider.cart == null || cartProvider.cart!.items.isEmpty
           ? null
-          : Container(
-              padding: EdgeInsets.all(10),
-              child: ElevatedButton(
-                onPressed: cartProvider.isProcessing
-                    ? null
-                    : () {
-                        Navigator.pushNamed(context, "/checkout");
-                      },
-                child: cartProvider.isProcessing
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text("Thanh toán (${cartProvider.totalPrice} VNĐ)"),
-              ),
-            ),
+          : _buildBottomBar(cartProvider),
     );
   }
 
+  /// 📌 **Hiển thị từng sản phẩm trong giỏ hàng**
   Widget _buildCartItem(CartProvider cartProvider, CartItem item) {
-    return ListTile(
-      leading: Image.network(
-        item.imageUrl,
-        width: 50,
-        height: 50,
-        errorBuilder: (context, error, stackTrace) =>
-            Icon(Icons.broken_image, size: 50),
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      child: ListTile(
+        leading: Image.network(
+          item.imageUrl,
+          width: 50,
+          height: 50,
+          errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image, size: 50),
+        ),
+        title: Text(item.name),
+        subtitle: Text("${item.price} VNĐ x ${item.quantityCake + item.quantityAccessory}"),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(Icons.remove),
+              onPressed: item.quantityCake > 1
+                  ? () => cartProvider.updateQuantity(item.productId, item.quantityCake - 1)
+                  : null,
+            ),
+            Text("${item.quantityCake}"),
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () => cartProvider.updateQuantity(item.productId, item.quantityCake + 1),
+            ),
+            IconButton(
+              icon: Icon(Icons.delete, color: Colors.red),
+              onPressed: () => cartProvider.removeFromCart(item.productId),
+            ),
+          ],
+        ),
       ),
-      title: Text(item.name),
-      subtitle: Text(
-          "${item.price} VNĐ x ${item.quantityCake + item.quantityAccessory}"), // ✅ Sửa lỗi hiển thị tổng số lượng
-      trailing: Row(
+    );
+  }
+
+  /// 📌 **Thanh toán & Tổng tiền**
+  Widget _buildBottomBar(CartProvider cartProvider) {
+    return Container(
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+      ),
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            icon: Icon(Icons.remove),
-            onPressed: item.quantityCake > 1
-                ? () => cartProvider.updateQuantity(item.productId, item.quantityCake - 1)
-                : null,
+          Text(
+            "Tổng tiền: ${cartProvider.totalPrice} VNĐ",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          Text("${item.quantityCake}"), // ✅ Hiển thị số lượng bánh đúng
-          IconButton(
-            icon: cartProvider.isUpdating[item.productId] == true
-                ? CircularProgressIndicator(strokeWidth: 2)
-                : Icon(Icons.add),
-            onPressed: cartProvider.isUpdating[item.productId] == true
-                ? null
-                : () => cartProvider.updateQuantity(item.productId, item.quantityCake + 1),
-          ),
-          IconButton(
-            icon: Icon(Icons.delete, color: Colors.red),
-            onPressed: () async {
-              bool? confirmDelete = await showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text("Xóa sản phẩm"),
-                  content: Text("Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?"),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: Text("Hủy"),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: Text("Xóa"),
-                    ),
-                  ],
-                ),
-              );
-              if (confirmDelete == true) {
-                cartProvider.removeFromCart(item.productId);
-              }
-            },
+          SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: cartProvider.isProcessing ? null : () => cartProvider.checkout(),
+            child: cartProvider.isProcessing
+                ? CircularProgressIndicator(color: Colors.white)
+                : Text("Thanh toán"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              minimumSize: Size(double.infinity, 50),
+            ),
           ),
         ],
       ),

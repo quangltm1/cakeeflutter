@@ -1,4 +1,7 @@
+import 'package:cakeeflutter/app/model/cart_item.dart';
+import 'package:cakeeflutter/app/providers/cart_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'checkout_page.dart'; // Import CheckoutPage cho người dùng đã đăng nhập
 import 'checkout_nologin_page.dart'; // Import GuestOrderPage cho khách vãng lai
@@ -8,12 +11,48 @@ class CakeDetailPage extends StatelessWidget {
 
   CakeDetailPage({required this.product});
 
-  /// 🛒 **Thêm vào giỏ hàng**
-  void _addToCart(BuildContext context) {
+
+/// 🛒 **Thêm vào giỏ hàng**
+void _addToCart(BuildContext context) async {
+  final cartProvider = Provider.of<CartProvider>(context, listen: false);
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? userId = prefs.getString('userId');
+
+  if (userId == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("🛒 Đã thêm vào giỏ hàng!")),
+      SnackBar(content: Text("❌ Bạn cần đăng nhập để thêm vào giỏ hàng!")),
+    );
+    return;
+  }
+
+  CartItem newItem = CartItem(
+    productId: product['id'].toString(),
+    cakeId: product['id'].toString(),
+    accessoryId: "",
+    quantityCake: 1,
+    quantityAccessory: 0,
+    total: product['cakePrice'].toDouble(),
+    name: product['cakeName'] ?? "Không có tên",
+    price: product['cakePrice'].toDouble(),
+    imageUrl: product['cakeImage'] ?? 'https://via.placeholder.com/300',
+  );
+
+  // ✅ Kiểm tra giá trị trả về từ `addToCart`
+  bool success = await cartProvider.addToCart(newItem);
+
+  if (success) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("✅ Đã thêm vào giỏ hàng!")),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("❌ Lỗi khi thêm vào giỏ hàng!")),
     );
   }
+}
+
+
+
 
   /// ⚡ **Xử lý Mua ngay**
   void _buyNow(BuildContext context) async {

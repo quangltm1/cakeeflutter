@@ -76,6 +76,8 @@ class _DonHangPageState extends State<DonHangPage> with SingleTickerProviderStat
     return Scaffold(
       appBar: AppBar(
         title: Text("Đơn hàng của tôi"),
+        centerTitle: true,
+        backgroundColor: Color(0xFFFFD900),
         bottom: TabBar(
           controller: _tabController,
           tabs: [

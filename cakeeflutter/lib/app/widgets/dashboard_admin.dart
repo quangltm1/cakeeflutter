@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cakeeflutter/app/screen/admin/caidat_admin.dart';
 import 'package:cakeeflutter/app/screen/admin/donhang_admin.dart';
-import 'package:cakeeflutter/app/screen/admin/thuchi_admin.dart';
+import 'package:cakeeflutter/app/screen/admin/doanhthu_admin.dart';
 import 'package:cakeeflutter/app/screen/admin/trangchu_admin.dart';
 
 class AdminHomeScreen extends StatefulWidget {
@@ -18,7 +18,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   final List<Widget> _pages = [
     TrangChuAdmin(),
     DonHangAdmin(),
-    ThuChiAdmin(),
+    DoanhthuAdmin(),
     CaiDatAdminScreen(),
   ];
 

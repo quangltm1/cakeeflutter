@@ -28,7 +28,8 @@ class _CaiDatUserScreenState extends State<CaiDatUserScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cài Đặt'),
-        backgroundColor: Colors.white,
+        centerTitle: true,
+        backgroundColor: Color(0xFFFFD900),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
