@@ -10,7 +10,7 @@ class CaiDatAdminScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: Color(0xFFFFD900),
       ),
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: Padding(

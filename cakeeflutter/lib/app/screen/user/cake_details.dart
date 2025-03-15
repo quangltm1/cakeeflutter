@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'checkout_nologin_page.dart'; // Import GuestOrderPage
+import 'checkout_page.dart'; // Import CheckoutPage cho người dùng đã đăng nhập
+import 'checkout_nologin_page.dart'; // Import GuestOrderPage cho khách vãng lai
 
 class CakeDetailPage extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -16,68 +17,77 @@ class CakeDetailPage extends StatelessWidget {
 
   /// ⚡ **Xử lý Mua ngay**
   void _buyNow(BuildContext context) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    String? userId = prefs.getString('userId');
 
-  if (token == null) {
-    _showGuestCheckoutDialog(context); // Hiện hộp thoại chọn phương thức mua hàng
-  } else {
-    _processOrder(context); // Xử lý mua ngay nếu đã đăng nhập
+    if (token == null) {
+      _showGuestCheckoutDialog(context); // Hiện hộp thoại cho thanh toán khách
+    } else {
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("❌ Không tìm thấy thông tin người dùng")),
+        );
+      } else {
+        _redirectToCheckout(context, userId); // Chuyển hướng tới CheckoutPage nếu người dùng đã đăng nhập
+      }
+    }
   }
-}
 
-void _showGuestCheckoutDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text("Bạn có muốn đăng nhập?"),
-      content: Text("Bạn có thể đăng nhập để lưu đơn hàng hoặc tiếp tục mua hàng mà không cần đăng nhập."),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-
-            // 🛠 Kiểm tra xem `cakeId` có null không
-            if (product['id'] != null) {
-              print("✅ id: ${product['id']}"); // Debug
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GuestOrderPage(
-                    cakeId: product['id'].toString(), // ✅ Fix lỗi null
-                    quantity: 1,
+  /// 🛒 **Xử lý Đặt hàng cho khách**
+  void _showGuestCheckoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Bạn có muốn đăng nhập?"),
+        content: Text("Bạn có thể đăng nhập để lưu đơn hàng hoặc tiếp tục mua hàng mà không cần đăng nhập."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (product['id'] != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GuestOrderPage(
+                      cakeId: product['id'].toString(),
+                    ),
                   ),
-                ),
-              );
-            } else {
-              print("❌ Không tìm thấy id"); // Debug
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("❌ Không tìm thấy sản phẩm!")),
-              );
-            }
-          },
-          child: Text("Tiếp tục"),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/login');
-          },
-          child: Text("Đăng nhập"),
-        ),
-      ],
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("❌ Không tìm thấy sản phẩm!")),
+                );
+              }
+            },
+            child: Text("Tiếp tục mua hàng"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/login');
+            },
+            child: Text("Đăng nhập"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ✅ **Chuyển tới trang Checkout nếu đã đăng nhập**
+void _redirectToCheckout(BuildContext context, String userId) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => CheckoutPage(
+        cakeId: product['id'].toString(),
+        userId: userId, // Gửi userId tới trang CheckoutPage
+        cakeName: product['cakeName'] ?? 'Không có tên', // Pass cakeName here
+      ),
     ),
   );
 }
 
-
-  /// ✅ **Xử lý đặt hàng khi đã đăng nhập**
-  void _processOrder(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("✅ Mua ngay thành công!")),
-    );
-    // TODO: Thêm logic đặt hàng tại đây
-  }
 
   @override
   Widget build(BuildContext context) {

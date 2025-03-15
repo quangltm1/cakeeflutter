@@ -3,6 +3,7 @@ class Bill {
   String customName;
   String address;
   String phone;
+  String customName1;
   String deliveryDate;
   int deposit;
   String note;
@@ -20,6 +21,7 @@ class Bill {
     required this.customName,
     required this.address,
     required this.phone,
+    required this.customName1,
     required this.deliveryDate,
     required this.deposit,
     required this.note,
@@ -39,6 +41,7 @@ class Bill {
       customName: json['customName'] ?? "Khách hàng", 
       address: json['address'] ?? "Chưa có địa chỉ",
       phone: json['phone'] ?? "Chưa có số điện thoại",
+      customName1: json['customName'] ?? "Khách hàng",
       deliveryDate: json['deliveryDate'] ?? "0000-00-00", 
       deposit: json['deposit'] ?? 0,
       note: json['note'] ?? "",

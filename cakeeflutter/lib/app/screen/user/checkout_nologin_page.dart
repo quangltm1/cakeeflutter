@@ -3,9 +3,8 @@ import 'package:dio/dio.dart';
 
 class GuestOrderPage extends StatefulWidget {
   final String cakeId;
-  final int quantity;
 
-  GuestOrderPage({required this.cakeId, required this.quantity});
+  GuestOrderPage({required this.cakeId});
 
   @override
   _GuestOrderPageState createState() => _GuestOrderPageState();
@@ -15,6 +14,9 @@ class _GuestOrderPageState extends State<GuestOrderPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
+  final TextEditingController _cakeContentController = TextEditingController();
+  int _quantity = 1; // Mặc định số lượng là 1
   bool _isLoading = false;
 
   /// 🛒 **Gửi yêu cầu đặt hàng**
@@ -32,13 +34,17 @@ class _GuestOrderPageState extends State<GuestOrderPage> {
     });
 
     final dio = Dio();
-    final url = "https://fitting-solely-fawn.ngrok-free.app/api/Bill/CreateBillForGuest";
+    final url =
+        "https://fitting-solely-fawn.ngrok-free.app/api/Bill/CreateBillForGuest";
 
     final data = {
+      "BillDeliveryCustomName": _nameController.text,
       "BillDeliveryPhone": _phoneController.text,
       "BillDeliveryAddress": _addressController.text,
       "BillCakeId": widget.cakeId,
-      "BillCakeQuantity": widget.quantity,
+      "BillCakeQuantity": _quantity, // Số lượng bánh
+      "BillNote": _noteController.text, // Ghi chú đơn hàng
+      "BillCakeContent": _cakeContentController.text, // Nội dung bánh
     };
 
     try {
@@ -67,7 +73,7 @@ class _GuestOrderPageState extends State<GuestOrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Nhập thông tin đặt hàng")),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
@@ -83,6 +89,44 @@ class _GuestOrderPageState extends State<GuestOrderPage> {
             TextField(
               controller: _addressController,
               decoration: InputDecoration(labelText: "Địa chỉ nhận hàng"),
+            ),
+            SizedBox(height: 15),
+            Text("Số lượng bánh", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.remove, color: Colors.red),
+                  onPressed: () {
+                    if (_quantity > 1) {
+                      setState(() {
+                        _quantity--;
+                      });
+                    }
+                  },
+                ),
+                Text(
+                  _quantity.toString(),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: Icon(Icons.add, color: Colors.green),
+                  onPressed: () {
+                    setState(() {
+                      _quantity++;
+                    });
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 15),
+            TextField(
+              controller: _cakeContentController,
+              decoration: InputDecoration(labelText: "Nội dung bánh (Tuỳ chọn)"),
+            ),
+            TextField(
+              controller: _noteController,
+              decoration: InputDecoration(labelText: "Ghi chú đơn hàng (Tuỳ chọn)"),
             ),
             SizedBox(height: 20),
             Row(

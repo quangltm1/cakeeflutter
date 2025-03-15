@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DonHangAdmin extends StatefulWidget {
@@ -19,7 +20,6 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
     _getShopIdAndFetchBills();
   }
 
-  /// ✅ **Lấy `shopId` từ SharedPreferences và tải đơn hàng**
   Future<void> _getShopIdAndFetchBills() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? shopId = prefs.getString("userId");
@@ -35,14 +35,12 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
     }
   }
 
-  /// ✅ **Gọi API lấy danh sách đơn hàng theo `BillShopId`**
   Future<void> _fetchBills(String shopId) async {
     try {
       var response = await Dio().get("https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill");
 
       if (response.statusCode == 200) {
         setState(() {
-          // 🔥 Lọc danh sách đơn hàng theo `BillShopId`
           allBills = response.data.where((bill) => bill["billShopId"] == shopId).toList();
         });
       }
@@ -57,12 +55,12 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
       appBar: AppBar(
         title: Text("Quản lý đơn hàng"),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFFFFD900),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.orange,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.orange,
+          labelColor: Colors.black,
+          unselectedLabelColor: Colors.blueGrey,
+          indicatorColor: Colors.black,
           tabs: [
             Tab(text: "Chờ xử lý"),
             Tab(text: "Đang xử lý"),
@@ -107,7 +105,7 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Tổng tiền: ${bill["total"]} VNĐ"),
+                    Text("Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
                   Text("Giao hàng: ${bill["deliveryDate"]}"),
                   Text("Trạng thái: ${_getStatusText(bill["status"])}"),
                 ],
@@ -153,7 +151,11 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
               Text("Tên khách: ${bill["customName"]}"),
               Text("Số điện thoại: ${bill["phone"]}"),
               Text("Địa chỉ: ${bill["address"]}"),
-              Text("Tổng tiền: ${bill["total"]} VNĐ"),
+              Text("Ghi chú: ${bill["note"]}"),
+              Divider(),
+              Text("Bánh: ${bill["cakeName"]}"),
+              Text("Nội dung: ${bill["cakeContent"]}"),
+              Text("Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
               Text("Giao hàng: ${bill["deliveryDate"]}"),
               Text("Trạng thái: ${_getStatusText(bill["status"])}"),
             ],

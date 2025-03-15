@@ -177,13 +177,11 @@ class _TrangChuUserPageState extends State<TrangChuUserPage> {
         itemBuilder: (context, index) {
           final category = _categories[index];
 
-          // 🛠 Kiểm tra nếu ID danh mục bị thiếu
           if (!category.containsKey('categoryId') &&
               !category.containsKey('id')) {
             return SizedBox(); // Bỏ qua danh mục lỗi
           }
 
-          // 🔥 Đổi khóa ID nếu API trả về `id` thay vì `categoryId`
           final categoryId = category.containsKey('categoryId')
               ? category['categoryId'].toString()
               : category['id'].toString();
@@ -231,7 +229,8 @@ class _TrangChuUserPageState extends State<TrangChuUserPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => CakeDetailPage(product: cake)),
+            builder: (context) => CakeDetailPage(product: cake),
+          ),
         );
       },
       child: Container(
@@ -262,11 +261,25 @@ class _TrangChuUserPageState extends State<TrangChuUserPage> {
             ),
             Padding(
               padding: EdgeInsets.all(8),
-              child: Text(
-                cake['cakeName'] ?? 'Không có tên',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontWeight: FontWeight.bold),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    cake['cakeName'] ?? 'Không có tên',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 4), // Khoảng cách giữa tên và giá
+                  Text(
+                    "${cake['cakePrice'] ?? 0} VNĐ", // Hiển thị giá sản phẩm
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

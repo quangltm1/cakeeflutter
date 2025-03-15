@@ -63,7 +63,7 @@ class BillService {
     final url = "$baseUrl/CreateBillForGuest";
 
     final data = {
-      "BillCustomName": name, // ✅ Tên khách vãng lai
+      "BillDeliveryCustomName": name, // ✅ Tên khách vãng lai
       "BillDeliveryPhone": phone,
       "BillDeliveryAddress": address,
       "BillCakeId": cakeId,
