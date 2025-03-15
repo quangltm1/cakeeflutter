@@ -1,99 +1,107 @@
-import 'package:cakeeflutter/app/core/bill_service.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 
-class CheckoutNologinPage extends StatefulWidget {
-  final Map<String, dynamic> product;
+class GuestOrderPage extends StatefulWidget {
+  final String cakeId;
+  final int quantity;
 
-  CheckoutNologinPage({required this.product});
+  GuestOrderPage({required this.cakeId, required this.quantity});
 
   @override
-  _CheckoutNologinPageState createState() => _CheckoutNologinPageState();
+  _GuestOrderPageState createState() => _GuestOrderPageState();
 }
 
-class _CheckoutNologinPageState extends State<CheckoutNologinPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _phoneController = TextEditingController();
-  bool _isLoggedIn = false;
+class _GuestOrderPageState extends State<GuestOrderPage> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _checkLoginStatus();
-  }
-
-  Future<void> _checkLoginStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    if (token != null) {
-      setState(() {
-        _isLoggedIn = true;
-      });
-    }
-  }
-
+  /// 🛒 **Gửi yêu cầu đặt hàng**
   Future<void> _placeOrder() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_nameController.text.isEmpty ||
+        _phoneController.text.isEmpty ||
+        _addressController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Vui lòng nhập đầy đủ thông tin!")));
+      return;
+    }
 
-    Map<String, dynamic> orderData = {
-      "customName": _nameController.text,
-      "address": _addressController.text,
-      "phone": _phoneController.text,
-      "cakeName": widget.product["cakeName"],
-      "cakeSize": widget.product["cakeSize"],
-      "total": widget.product["cakePrice"],
-      "quantity": 1,
+    setState(() {
+      _isLoading = true;
+    });
+
+    final dio = Dio();
+    final url = "https://fitting-solely-fawn.ngrok-free.app/api/Bill/CreateBillForGuest";
+
+    final data = {
+      "BillDeliveryPhone": _phoneController.text,
+      "BillDeliveryAddress": _addressController.text,
+      "BillCakeId": widget.cakeId,
+      "BillCakeQuantity": widget.quantity,
     };
 
-    bool success = await BillService.createBill(orderData);
-    if (success) {
+    try {
+      final response = await dio.post(url, data: data);
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("✅ Đặt hàng thành công!")),
+        );
+        Navigator.pop(context); // Quay về trang trước
+      } else {
+        throw Exception("Lỗi API");
+      }
+    } catch (e) {
+      print("❌ Lỗi đặt hàng: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Đặt hàng thành công!")),
+        SnackBar(content: Text("❌ Lỗi đặt hàng, vui lòng thử lại!")),
       );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Có lỗi xảy ra, vui lòng thử lại!")),
-      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Xác nhận đơn hàng")),
+      appBar: AppBar(title: Text("Nhập thông tin đặt hàng")),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              if (!_isLoggedIn) ...[
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(labelText: "Họ và Tên"),
-                  validator: (value) => value!.isEmpty ? "Vui lòng nhập tên" : null,
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: "Tên khách hàng"),
+            ),
+            TextField(
+              controller: _phoneController,
+              decoration: InputDecoration(labelText: "Số điện thoại"),
+              keyboardType: TextInputType.phone,
+            ),
+            TextField(
+              controller: _addressController,
+              decoration: InputDecoration(labelText: "Địa chỉ nhận hàng"),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _placeOrder,
+                  child: _isLoading
+                      ? CircularProgressIndicator(color: Colors.white)
+                      : Text("🛒 Đặt hàng"),
                 ),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: InputDecoration(labelText: "Địa chỉ"),
-                  validator: (value) => value!.isEmpty ? "Vui lòng nhập địa chỉ" : null,
-                ),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: InputDecoration(labelText: "Số điện thoại"),
-                  validator: (value) => value!.isEmpty ? "Vui lòng nhập số điện thoại" : null,
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("❌ Hủy"),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 ),
               ],
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _placeOrder,
-                child: Text("Đặt hàng"),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

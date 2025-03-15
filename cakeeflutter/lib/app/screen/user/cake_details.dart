@@ -1,6 +1,6 @@
-import 'package:cakeeflutter/app/screen/user/checkout_nologin_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'checkout_nologin_page.dart'; // Import GuestOrderPage
 
 class CakeDetailPage extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -10,7 +10,7 @@ class CakeDetailPage extends StatelessWidget {
   /// 🛒 **Thêm vào giỏ hàng**
   void _addToCart(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Đã thêm vào giỏ hàng!")),
+      SnackBar(content: Text("🛒 Đã thêm vào giỏ hàng!")),
     );
   }
 
@@ -20,51 +20,63 @@ class CakeDetailPage extends StatelessWidget {
   String? token = prefs.getString('token');
 
   if (token == null) {
-    // Chuyển hướng đến `CheckoutPage` để nhập thông tin
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CheckoutNologinPage(product: product),
-      ),
-    );
+    _showGuestCheckoutDialog(context); // Hiện hộp thoại chọn phương thức mua hàng
   } else {
-    // Tiến hành thanh toán ngay nếu đã đăng nhập
-    //_processOrder(context);
+    _processOrder(context); // Xử lý mua ngay nếu đã đăng nhập
   }
 }
 
+void _showGuestCheckoutDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text("Bạn có muốn đăng nhập?"),
+      content: Text("Bạn có thể đăng nhập để lưu đơn hàng hoặc tiếp tục mua hàng mà không cần đăng nhập."),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
 
-  /// ✅ **Hiển thị hộp thoại hỏi đăng nhập hay tiếp tục mua hàng**
-  void _showGuestCheckoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Bạn có muốn đăng nhập?"),
-        content: Text("Bạn có thể đăng nhập để lưu đơn hàng hoặc tiếp tục mua hàng mà không cần đăng nhập."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Đóng hộp thoại
-              // ✅ Điều hướng sang trang nhập thông tin đơn hàng
+            // 🛠 Kiểm tra xem `cakeId` có null không
+            if (product['id'] != null) {
+              print("✅ id: ${product['id']}"); // Debug
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CheckoutNologinPage(product: product),
+                  builder: (context) => GuestOrderPage(
+                    cakeId: product['id'].toString(), // ✅ Fix lỗi null
+                    quantity: 1,
+                  ),
                 ),
               );
-            },
-            child: Text("Tiếp tục"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Đóng hộp thoại
-              Navigator.pushNamed(context, '/login'); // Chuyển đến trang đăng nhập
-            },
-            child: Text("Đăng nhập"),
-          ),
-        ],
-      ),
+            } else {
+              print("❌ Không tìm thấy id"); // Debug
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("❌ Không tìm thấy sản phẩm!")),
+              );
+            }
+          },
+          child: Text("Tiếp tục"),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/login');
+          },
+          child: Text("Đăng nhập"),
+        ),
+      ],
+    ),
+  );
+}
+
+
+  /// ✅ **Xử lý đặt hàng khi đã đăng nhập**
+  void _processOrder(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("✅ Mua ngay thành công!")),
     );
+    // TODO: Thêm logic đặt hàng tại đây
   }
 
   @override
@@ -133,22 +145,14 @@ class CakeDetailPage extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => _addToCart(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: Text("🛒 Thêm vào giỏ hàng", style: TextStyle(fontSize: 16)),
+                    child: Text("🛒 Thêm vào giỏ hàng"),
                   ),
                 ),
                 SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => _buyNow(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: Text("⚡ Mua ngay", style: TextStyle(fontSize: 16)),
+                    child: Text("⚡ Mua ngay"),
                   ),
                 ),
               ],

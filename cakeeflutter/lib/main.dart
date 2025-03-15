@@ -1,3 +1,4 @@
+import 'package:cakeeflutter/app/widgets/dashboard_user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cakeeflutter/app/providers/cart_provider.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
       home: WelcomeScreen(),
       routes: {
         '/login': (context) => LoginScreen(),
+        '/trang-chu': (context) => UserHomeScreen(),
         '/phu-kien': (context) => QuanLyAcessory(),
         '/cake': (context) => QuanLyCake(),
         '/danh-muc': (context) => QuanLyCategory(),

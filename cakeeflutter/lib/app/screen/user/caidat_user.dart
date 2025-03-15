@@ -119,6 +119,6 @@ class _CaiDatUserScreenState extends State<CaiDatUserScreen> {
     setState(() {
       isLoggedIn = false;
     });
-    Navigator.of(context).pushReplacementNamed('/login');
+    Navigator.of(context).pushReplacementNamed('/trang-chu');
   }
 }

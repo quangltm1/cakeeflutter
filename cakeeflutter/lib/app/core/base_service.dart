@@ -92,6 +92,7 @@ class APIRepository {
             await prefs.setInt('role', role);
             await prefs.setString('userId',
                 user.id.toString()); // ⚡ Sửa lỗi: Lưu userId dưới dạng String
+            await prefs.setString('shopId', user.id.toString());
 
             return tokenData;
           } else {
