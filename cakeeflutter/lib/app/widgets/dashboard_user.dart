@@ -18,7 +18,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   static final List<Widget> _widgetOptions = <Widget>[
     TrangChuUserPage(),
     DonHangPage(),
-    GioHangPage(),
+    CartPage(),
     CaiDatUserScreen(),
   ];
 
