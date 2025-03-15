@@ -59,12 +59,17 @@ class _TrangChuUserPageState extends State<TrangChuUserPage> {
 
   Future<void> _handleRefresh() async {
     try {
+      List<Map<String, dynamic>> newData;
       if (_selectedCategoryId == null) {
-        // Nếu không chọn danh mục, tải lại tất cả bánh
-        await _fetchAllCakes();
+        newData = await _cakeService.getAllCakes();
       } else {
-        // Nếu đang chọn danh mục, tải lại bánh theo danh mục đó
-        await _fetchCakesByCategory(_selectedCategoryId!);
+        newData = await _cakeService.getCakesByCategory(_selectedCategoryId!);
+      }
+
+      if (mounted) {
+        setState(() {
+          _cakesFuture = Future.value(newData);
+        });
       }
     } catch (e) {
       print("❌ Error refreshing: $e");
@@ -75,8 +80,7 @@ class _TrangChuUserPageState extends State<TrangChuUserPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _buildSearchBar(), 
-        backgroundColor: Color(0xFFFFD900),
+        title: _buildSearchBar(), // 🔥 Đặt thanh tìm kiếm vào AppBar
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,53 +88,49 @@ class _TrangChuUserPageState extends State<TrangChuUserPage> {
           _buildCategoryList(), // ✅ Danh mục
           Expanded(
             child: RefreshIndicator(
-              onRefresh: _handleRefresh,
-              child: SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                child: FutureBuilder<List<Map<String, dynamic>>>(
-                  future: _cakesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text("Lỗi: ${snapshot.error}"));
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.remove_shopping_cart,
-                                size: 50, color: Colors.grey),
-                            SizedBox(height: 10),
-                            Text(
-                              "Không có bánh nào trong danh mục này!",
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    var cakes = snapshot.data!;
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: cakes.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.75,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
+              onRefresh: _handleRefresh, // 🔥 Gọi hàm làm mới khi vuốt xuống
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _cakesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text("Lỗi: ${snapshot.error}"));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.remove_shopping_cart,
+                              size: 50, color: Colors.grey),
+                          SizedBox(height: 10),
+                          Text(
+                            "Không có bánh nào trong danh mục này!",
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey),
+                          ),
+                        ],
                       ),
-                      itemBuilder: (context, index) {
-                        return _buildProductItem(cakes[index]);
-                      },
                     );
-                  },
-                ),
+                  }
+
+                  var cakes = snapshot.data!;
+                  return GridView.builder(
+                    padding: EdgeInsets.all(10),
+                    itemCount: cakes.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.75,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    itemBuilder: (context, index) {
+                      return _buildProductItem(cakes[index]);
+                    },
+                  );
+                },
               ),
             ),
           ),
