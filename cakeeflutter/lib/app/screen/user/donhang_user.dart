@@ -10,23 +10,25 @@ class DonHangPage extends StatefulWidget {
   _DonHangPageState createState() => _DonHangPageState();
 }
 
-class _DonHangPageState extends State<DonHangPage> {
+class _DonHangPageState extends State<DonHangPage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final BillService _billService = BillService();
   List<Bill> orders = [];
   bool isLoading = true;
   Timer? _timer;
-  String? lastUpdate; // Lưu timestamp của lần cập nhật cuối
 
   @override
   void initState() {
     super.initState();
-    _loadBills(); 
-    _startPolling(); 
+    _tabController = TabController(length: 4, vsync: this);
+    _loadBills();
+    _startPolling();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -42,20 +44,19 @@ class _DonHangPageState extends State<DonHangPage> {
       String? customerId = prefs.getString("userId");
 
       if (customerId == null || customerId.isEmpty) {
-        return;
+        throw Exception("User ID không tồn tại");
       }
 
       final fetchedOrders = await _billService.getBillOfCustom(customerId);
-      final newUpdate = DateTime.now().toIso8601String(); // Lưu timestamp mới
 
-      if (lastUpdate == null || fetchedOrders.toString() != orders.toString()) {
-        setState(() {
-          orders = fetchedOrders;
-          lastUpdate = newUpdate; 
-          isLoading = false;
-        });
-      }
+      if (!mounted) return;
+
+      setState(() {
+        orders = fetchedOrders;
+        isLoading = false;
+      });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -63,40 +64,73 @@ class _DonHangPageState extends State<DonHangPage> {
     }
   }
 
+  List<Bill> getOrdersByStatus(int status) {
+    return orders.where((order) => order.status == status).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Đơn hàng của tôi")),
+      appBar: AppBar(
+        title: Text("Đơn hàng của tôi"),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(text: "Đang chờ nhận"),
+            Tab(text: "Đang chuẩn bị"),
+            Tab(text: "Đang giao"),
+            Tab(text: "Đã giao"),
+          ],
+        ),
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : orders.isEmpty
-              ? Center(child: Text("Không có đơn hàng nào"))
-              : ListView.builder(
-                  padding: EdgeInsets.all(10),
-                  itemCount: orders.length,
-                  itemBuilder: (context, index) {
-                    final Bill order = orders[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text("Bánh: ${order.cakeName}"),
-                        subtitle: Text(
-                          "Ngày giao: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(order.deliveryDate))}\n"
-                          "Tổng tiền: ${NumberFormat('#,###').format(order.total)} VNĐ\n"
-                          "Số lượng: ${order.quantity}",
-                        ),
-                        trailing: Text(
-                          order.status == 0
-                              ? "Đã giao"
-                              : order.status == 1
-                                  ? "Đang chờ nhận đơn"
-                                  : order.status == 2
-                                      ? "Đang chuẩn bị"
-                                      : "Đang giao",
-                        ),
-                      ),
-                    );
-                  },
-                ),
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildOrderList(getOrdersByStatus(1)), // Đang chờ nhận
+                _buildOrderList(getOrdersByStatus(2)), // Đang chuẩn bị
+                _buildOrderList(getOrdersByStatus(3)), // Đang giao
+                _buildOrderList(getOrdersByStatus(0)), // Đã giao
+              ],
+            ),
+    );
+  }
+
+  Widget _buildOrderList(List<Bill> filteredOrders) {
+    if (filteredOrders.isEmpty) {
+      return Center(child: Text("Không có đơn hàng nào"));
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.all(10),
+      itemCount: filteredOrders.length,
+      itemBuilder: (context, index) {
+        final Bill order = filteredOrders[index];
+        return Card(
+          child: ListTile(
+            title: Text("Bánh: ${order.cakeName}"),
+            subtitle: Text(
+              "Ngày giao: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(order.deliveryDate))}\n"
+              "Tổng tiền: ${NumberFormat('#,###').format(order.total)} VNĐ\n"
+              "Số lượng: ${order.quantity}",
+            ),
+            trailing: Text(
+              order.status == 0
+                  ? "Đã giao"
+                  : order.status == 1
+                      ? "Đang chờ nhận đơn"
+                      : order.status == 2
+                          ? "Đang chuẩn bị"
+                          : "Đang giao",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: order.status == 0 ? Colors.green : Colors.orange,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

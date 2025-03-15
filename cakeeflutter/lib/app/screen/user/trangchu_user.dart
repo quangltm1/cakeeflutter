@@ -1,7 +1,8 @@
 import 'package:cakeeflutter/app/core/cake_service.dart';
-import 'package:cakeeflutter/app/widgets/category_chip.dart';
+import 'package:cakeeflutter/app/screen/user/cake_details.dart';
+import 'package:cakeeflutter/app/screen/user/search_page.dart';
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:cakeeflutter/app/core/category_service.dart';
 
 class TrangChuUserPage extends StatefulWidget {
   @override
@@ -10,99 +11,244 @@ class TrangChuUserPage extends StatefulWidget {
 
 class _TrangChuUserPageState extends State<TrangChuUserPage> {
   final CakeService _cakeService = CakeService();
-  final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _searchResults = [];
-  bool _isLoading = false;
+  final CategoryService _categoryService = CategoryService();
 
-  void _searchCakes(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-      });
-      return;
-    }
+  List<Map<String, dynamic>> _categories = [];
+  String? _selectedCategoryId; // Nếu null, hiển thị tất cả bánh
+  Future<List<Map<String, dynamic>>>? _cakesFuture;
 
-    setState(() {
-      _isLoading = true;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+    _fetchAllCakes(); // 🔥 Lấy toàn bộ bánh khi vào trang
+  }
 
+  void _fetchCategories() async {
     try {
-      final results = await _cakeService.searchCakes(query);
-      setState(() {
-        _searchResults = results;
-      });
+      final categories = await _categoryService.getCategories();
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+        });
+      }
     } catch (e) {
-      print("Search error: $e");
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      print("Error loading categories: $e");
     }
   }
 
+  void _fetchAllCakes() {
+    setState(() {
+      _selectedCategoryId = null; // Đặt về null để hiển thị tất cả bánh
+      _cakesFuture = _cakeService.getAllCakes();
+    });
+  }
+
+  void _fetchCakesByCategory(String? categoryId) {
+    if (categoryId == null || categoryId.isEmpty) {
+      return;
+    }
+
+
+    setState(() {
+      _selectedCategoryId = categoryId;
+      _cakesFuture = _cakeService.getCakesByCategory(categoryId);
+    });
+
+  }
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Trang chủ")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(title: Text("Cake Shop")),
+    body: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSearchBar(), // 🔥 Thêm thanh tìm kiếm
+        _buildCategoryList(),
+        Expanded(
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: _cakesFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text("Lỗi: ${snapshot.error}"));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.remove_shopping_cart, size: 50, color: Colors.grey),
+                      SizedBox(height: 10),
+                      Text(
+                        "Không có bánh nào trong danh mục này!",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              var cakes = snapshot.data!;
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: GridView.builder(
+                  itemCount: cakes.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemBuilder: (context, index) {
+                    return _buildProductItem(cakes[index]);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildSearchBar() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: GestureDetector(
+      onTap: () {
+        // Chuyển sang màn hình tìm kiếm
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SearchPage()), // 🔥 Mở trang tìm kiếm
+        );
+      },
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            SizedBox(width: 10),
+            Icon(Icons.search, color: Colors.grey),
+            SizedBox(width: 10),
+            Text("Tìm kiếm bánh...", style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+
+  Widget _buildCategoryList() {
+    return SizedBox(
+      height: 50,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          final category = _categories[index];
+
+          // 🛠 Kiểm tra nếu ID danh mục bị thiếu
+          if (!category.containsKey('categoryId') &&
+              !category.containsKey('id')) {
+            return SizedBox(); // Bỏ qua danh mục lỗi
+          }
+
+          // 🔥 Đổi khóa ID nếu API trả về `id` thay vì `categoryId`
+          final categoryId = category.containsKey('categoryId')
+              ? category['categoryId'].toString()
+              : category['id'].toString();
+
+          final isSelected = _selectedCategoryId == categoryId;
+
+          return GestureDetector(
+            onTap: () {
+              _fetchCakesByCategory(categoryId);
+            },
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.orange : Colors.grey[300],
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                            color: Colors.orange.withOpacity(0.5),
+                            blurRadius: 5)
+                      ]
+                    : [],
+              ),
+              child: Center(
+                child: Text(
+                  category['categoryName'] ?? "Không có tên",
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProductItem(Map<String, dynamic> cake) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => CakeDetailPage(product: cake)),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 5,
+              spreadRadius: 2,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Bạn tìm bánh gì?',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onChanged: _searchCakes, // Gọi API khi nhập text
-            ),
-            SizedBox(height: 20),
-            Text('Danh mục', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Row(
-              children: [
-                CategoryChip(label: "Lễ cưới", icon: Icons.favorite),
-                SizedBox(width: 10),
-                CategoryChip(label: "Sinh nhật", icon: Icons.cake),
-              ],
-            ),
-            SizedBox(height: 20),
-            Text("Kết quả tìm kiếm:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Expanded(
-              child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : _searchResults.isEmpty
-                      ? Center(child: Text("Không tìm thấy kết quả"))
-                      : ListView.builder(
-                          itemCount: _searchResults.length,
-                          itemBuilder: (context, index) {
-                            final cake = _searchResults[index];
-                            return ListTile(
-                              leading: Image.network(
-                            _getValidImageUrl(cake['cakeImage']),
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                          ),
-                              title: Text(cake['cakeName'] ?? 'No Name'),
-                              subtitle: Text(cake['cakeDescription'] ?? 'No Description'),
-                            );
-                          },
-                        ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+                child: Image.network(
+                  cake['cakeImage'] ?? "https://via.placeholder.com/150",
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                cake['cakeName'] ?? 'Không có tên',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-  String _getValidImageUrl(String? imageUrl) {
-    if (imageUrl == null || imageUrl.isEmpty) {
-      return "https://via.placeholder.com/150";
-    }
-    Uri? uri = Uri.tryParse(imageUrl);
-    return (uri != null && (uri.scheme == "http" || uri.scheme == "https"))
-        ? imageUrl
-        : "https://via.placeholder.com/150";
   }
 }
