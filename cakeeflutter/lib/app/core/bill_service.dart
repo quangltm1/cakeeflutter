@@ -22,7 +22,6 @@ class BillService {
         options: Options(headers: {"Authorization": "Bearer $token"}),
       );
 
-      print("🟢 API Response: ${response.statusCode} - ${response.data}");
 
       if (response.statusCode == 200) {
         if (response.data == null || response.data.isEmpty) {

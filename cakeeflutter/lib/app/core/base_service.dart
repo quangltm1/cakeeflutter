@@ -53,7 +53,6 @@ class APIRepository {
         data: user.toJson(),
       );
 
-      print("Response Data: ${res.data} | Status: ${res.statusCode}"); // Debug
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         // Chấp nhận cả 201 Created
@@ -79,7 +78,6 @@ class APIRepository {
         data: body,
       );
 
-      print("🔹 Response từ API: ${res.data}"); // Debug response
 
       if (res.statusCode == 200 && res.data != null) {
         String? tokenData = res.data['token'];
@@ -95,23 +93,17 @@ class APIRepository {
             await prefs.setString('userId',
                 user.id.toString()); // ⚡ Sửa lỗi: Lưu userId dưới dạng String
 
-            print(
-                "✅ Đăng nhập thành công! Token: $tokenData | Role: $role | UserID: ${user.id}");
             return tokenData;
           } else {
-            print("❌ Lỗi: Không thể lấy thông tin user sau khi đăng nhập.");
             return null;
           }
         } else {
-          print("❌ Lỗi: Không tìm thấy token hoặc role trong response");
           return null;
         }
       } else {
-        print("❌ Lỗi: Status Code ${res.statusCode}");
         return null;
       }
     } catch (ex) {
-      print("❌ Exception khi login(): $ex");
       return null;
     }
   }
@@ -130,16 +122,12 @@ class APIRepository {
         ),
       );
 
-      print("✅ Dữ liệu user trả về: ${res.data}"); // Debug response
-
       if (res.statusCode == 200 && res.data != null) {
         return User.fromJson(res.data);
       } else {
-        print("❌ Lỗi: Không lấy được thông tin user");
         return null;
       }
     } catch (ex) {
-      print("❌ Lỗi API current(): $ex");
       return null;
     }
   }
@@ -318,11 +306,8 @@ class APIRepository {
       String? token = prefs.getString('token');
 
       if (token == null) {
-        print("❌ Token không tồn tại!");
         return false;
       }
-
-      print("🗑 Gửi yêu cầu xóa danh mục ID: $categoryId");
 
       Response res = await api.sendRequest.delete(
         '/Category/Delete Category?id=$categoryId',
@@ -334,11 +319,9 @@ class APIRepository {
         ),
       );
 
-      print("📌 Phản hồi từ server: ${res.statusCode} - ${res.data}");
 
       return res.statusCode == 200;
     } catch (e) {
-      print("❌ Lỗi xóa danh mục: $e");
       return false;
     }
   }
@@ -386,7 +369,6 @@ class APIRepository {
       }
 
       String url = '/Category/Get Category By Id?id=$categoryId';
-      print("📌 Gửi request đến API: $url");
 
       Response res = await api.sendRequest.get(
         url,
@@ -398,17 +380,14 @@ class APIRepository {
         ),
       );
 
-      print("📌 API trả về: ${res.data}"); // Debug dữ liệu gốc
 
       if (res.statusCode == 200 && res.data != null) {
         Category category = Category.fromJson(res.data);
-        print("📌 Category nhận từ API: ${category.categoryName}");
         return category;
       } else {
         throw Exception('⚠️ Không thể lấy danh mục.');
       }
     } catch (e) {
-      print('❌ Lỗi khi lấy danh mục: $e');
       return null;
     }
   }
@@ -419,7 +398,6 @@ class APIRepository {
       String? userId = await _getUserId(); // Lấy userId từ SharedPreferences
 
       if (userId == null) {
-        print("❌ Lỗi: Không tìm thấy userId.");
         return false;
       }
 
@@ -436,14 +414,11 @@ class APIRepository {
       );
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        print("✅ Tạo danh mục thành công: ${res.data}");
         return true;
       } else {
-        print("❌ API trả về lỗi: ${res.statusCode} - ${res.data}");
         return false;
       }
     } catch (e) {
-      print("❌ Lỗi API addCategory: $e");
       return false;
     }
   }
@@ -462,7 +437,6 @@ class APIRepository {
       );
       return res.statusCode == 200;
     } catch (e) {
-      print("❌ Lỗi API updateCategory: $e");
       return false;
     }
   }
@@ -525,14 +499,11 @@ class APIRepository {
       );
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        print("✅ Tạo Acessory thành công: \${res.data}");
         return true;
       } else {
-        print("❌ API trả về lỗi: \${res.statusCode} - \${res.data}");
         return false;
       }
     } catch (e) {
-      print("❌ Lỗi API createAcessory: \$e");
       return false;
     }
   }
@@ -593,14 +564,11 @@ class APIRepository {
       );
 
       if (res.statusCode == 200) {
-        print("✅ Cập nhật phụ kiện thành công!");
         return true;
       } else {
-        print("⚠️ API trả về mã lỗi: ${res.statusCode} - ${res.data}");
         return false;
       }
     } catch (e) {
-      print("❌ Lỗi cập nhật phụ kiện: $e");
       return false;
     }
   }
@@ -616,7 +584,6 @@ class APIRepository {
       }
 
       String url = '/Acessory/Get Acessory By Id?id=$acessoryId';
-      print("📌 Gửi request đến API: $url");
 
       Response res = await api.sendRequest.get(
         url,
@@ -628,17 +595,14 @@ class APIRepository {
         ),
       );
 
-      print("📌 API trả về: ${res.data}"); // Debug dữ liệu gốc
 
       if (res.statusCode == 200 && res.data != null) {
         Acessory acessory = Acessory.fromJson(res.data);
-        print("📌 Acessory nhận từ API: ${acessory.acessoryName}");
         return acessory;
       } else {
         throw Exception('⚠️ Không thể lấy phụ kiện.');
       }
     } catch (e) {
-      print('❌ Lỗi khi lấy phụ kiện: $e');
       return null;
     }
   }
@@ -649,7 +613,6 @@ class APIRepository {
     String? token = await _getToken();
     if (token == null) throw Exception("❌ Token không tồn tại.");
 
-    print("📌 Gửi request tạo Cake Size với User ID: $userId và Size Name: $sizeName");
 
     Response res = await api.sendRequest.post(
       '/CakeSize/Create Cake Size',
@@ -663,17 +626,13 @@ class APIRepository {
       },
     );
 
-    print("📌 API Response (${res.statusCode}): ${res.data}");
 
     if (res.statusCode == 201 || res.statusCode == 200) {
-      print("✅ Tạo Cake Size thành công!");
       return true;
     } else {
-      print("⚠️ API trả về lỗi: ${res.statusCode} - ${res.data}");
       return false;
     }
   } catch (e) {
-    print("❌ Lỗi API createCakeSize: $e");
     return false;
   }
 }
@@ -687,8 +646,6 @@ class APIRepository {
         throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
       }
 
-      print(
-          "📌 Gửi request UPDATE Cake Size ID: $cakeSizeId với tên mới: $newSizeName");
 
       Response res = await api.sendRequest.patch(
         '/CakeSize/Update Cake Size?id=$cakeSizeId', // Đúng endpoint
@@ -702,14 +659,11 @@ class APIRepository {
       );
 
       if (res.statusCode == 200) {
-        print("✅ Cập nhật Cake Size thành công!");
         return true;
       } else {
-        print("⚠️ API trả về lỗi: ${res.statusCode} - ${res.data}");
         return false;
       }
     } catch (e) {
-      print("❌ Lỗi cập nhật Cake Size: $e");
       return false;
     }
   }
@@ -721,7 +675,6 @@ class APIRepository {
       if (token == null)
         throw Exception("❌ Token không tồn tại. Vui lòng đăng nhập lại.");
 
-      print("🗑 Gửi yêu cầu xóa Cake Size ID: $cakeSizeId");
 
       Response res = await api.sendRequest.delete(
         '/CakeSize/Delete Cake Size?id=$cakeSizeId',
@@ -731,17 +684,13 @@ class APIRepository {
         }),
       );
 
-      print("📌 Phản hồi từ server: ${res.statusCode} - ${res.data}");
 
       if (res.statusCode == 200) {
-        print("✅ Xóa Cake Size thành công!");
         return true;
       } else {
-        print("⚠️ API trả về lỗi: ${res.statusCode} - ${res.data}");
         return false;
       }
     } catch (e) {
-      print("❌ Lỗi xóa Cake Size: $e");
       return false;
     }
   }
@@ -750,13 +699,11 @@ class APIRepository {
     try {
       String? token = await _getToken();
       if (token == null) {
-        print("❌ Token không tồn tại.");
         return null;
       }
 
       String url =
           '/CakeSize/Get Cake Size By Id?id=$cakeSizeId'; // 🔥 Đổi thành đường dẫn đúng
-      print("📌 Gửi request GET: $url");
 
       Response res = await api.sendRequest.get(
         url,
@@ -766,16 +713,13 @@ class APIRepository {
         }),
       );
 
-      print("📌 API Response (${res.statusCode}): ${res.data}");
 
       if (res.statusCode == 200 && res.data != null) {
         return CakeSize.fromJson(res.data);
       } else {
-        print("⚠️ Không thể lấy Cake Size: ${res.statusCode} - ${res.data}");
         return null;
       }
     } catch (e) {
-      print("❌ Lỗi lấy Cake Size: $e");
       return null;
     }
   }
@@ -794,24 +738,18 @@ class APIRepository {
         }),
       );
 
-      print("📌 API Response Status: ${res.statusCode}");
-      print("📌 API Response Data: ${res.data}");
 
       if (res.statusCode == 200 && res.data != null) {
         List<dynamic> jsonResponse = res.data;
         List<CakeSize> sizes =
             jsonResponse.map((data) => CakeSize.fromJson(data)).toList();
 
-        print(
-            "📌 Danh sách Cake Size nhận được: ${sizes.map((e) => e.sizeName).toList()}");
 
         return sizes;
       } else {
-        print("⚠️ Không thể lấy danh sách Cake Size.");
         return [];
       }
     } catch (e) {
-      print("❌ Lỗi fetchCakeSizesByUserId: $e");
       return [];
     }
   }
