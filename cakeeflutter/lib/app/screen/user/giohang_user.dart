@@ -1,6 +1,7 @@
 import 'package:cakeeflutter/app/model/cart_item.dart';
 import 'package:cakeeflutter/app/providers/cart_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class CartPage extends StatefulWidget {
@@ -23,7 +24,7 @@ class _CartPageState extends State<CartPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Giỏ hàng (${cartProvider.totalItems})"),
+        title: Text("Giỏ hàng (${cartProvider.cart?.items.length ?? 0})"),
         centerTitle: true,
         backgroundColor: Colors.amber,
       ),
@@ -49,31 +50,34 @@ class _CartPageState extends State<CartPage> {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: ListTile(
-        leading: Image.network(
-          item.imageUrl,
-          width: 50,
-          height: 50,
-          errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image, size: 50),
-        ),
-        title: Text(item.name),
-        subtitle: Text("${item.price} VNĐ x ${item.quantityCake + item.quantityAccessory}"),
+        title: Text(item.cakeName),
+        subtitle: Text("${NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(item.total)} x ${item.quantityCake}"),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
               icon: Icon(Icons.remove),
               onPressed: item.quantityCake > 1
-                  ? () => cartProvider.updateQuantity(item.productId, item.quantityCake - 1)
+                  ? () async {
+                      await cartProvider.updateQuantity(item.cakeId, item.quantityCake - 1);
+                      setState(() {});
+                    }
                   : null,
             ),
             Text("${item.quantityCake}"),
             IconButton(
               icon: Icon(Icons.add),
-              onPressed: () => cartProvider.updateQuantity(item.productId, item.quantityCake + 1),
+              onPressed: () async {
+                await cartProvider.updateQuantity(item.cakeId, item.quantityCake + 1);
+                setState(() {});
+              },
             ),
             IconButton(
               icon: Icon(Icons.delete, color: Colors.red),
-              onPressed: () => cartProvider.removeFromCart(item.productId),
+              onPressed: () async {
+                await cartProvider.removeFromCart(item.cakeId);
+                setState(() {});
+              },
             ),
           ],
         ),
@@ -93,19 +97,19 @@ class _CartPageState extends State<CartPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            "Tổng tiền: ${cartProvider.totalPrice} VNĐ",
+            "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(cartProvider.totalPrice)}",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 10),
           ElevatedButton(
             onPressed: cartProvider.isProcessing ? null : () => cartProvider.checkout(),
-            child: cartProvider.isProcessing
-                ? CircularProgressIndicator(color: Colors.white)
-                : Text("Thanh toán"),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber,
               minimumSize: Size(double.infinity, 50),
             ),
+            child: cartProvider.isProcessing
+                ? CircularProgressIndicator(color: Colors.white)
+                : Text("Thanh toán"),
           ),
         ],
       ),

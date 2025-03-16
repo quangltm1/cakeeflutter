@@ -1,5 +1,6 @@
 import 'package:cakeeflutter/app/model/cart_item.dart';
 import 'package:cakeeflutter/app/providers/cart_provider.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,31 +26,49 @@ void _addToCart(BuildContext context) async {
     return;
   }
 
+  // 📌 Kiểm tra và log dữ liệu sản phẩm trước khi thêm vào giỏ hàng
+  print("📌 Dữ liệu sản phẩm: ${product.toString()}");
+
   CartItem newItem = CartItem(
-    productId: product['id'].toString(),
-    cakeId: product['id'].toString(),
+    cakeId: product['id']?.toString() ?? "", // 🔴 Fix lỗi null
+    cakeName: product['cakeName'] ?? "Không có tên",
     accessoryId: "",
+    accessoryName: "",
     quantityCake: 1,
     quantityAccessory: 0,
-    total: product['cakePrice'].toDouble(),
-    name: product['cakeName'] ?? "Không có tên",
-    price: product['cakePrice'].toDouble(),
-    imageUrl: product['cakeImage'] ?? 'https://via.placeholder.com/300',
+    total: (product['total'] ?? product['cakePrice'] ?? 0).toDouble(), // 🔴 Fix total
   );
 
-  // ✅ Kiểm tra giá trị trả về từ `addToCart`
-  bool success = await cartProvider.addToCart(newItem);
+  // 🛠 Log dữ liệu trước khi gửi lên API
+  print("🛒 Đang thêm vào giỏ hàng với dữ liệu: ${newItem.toJson()}");
 
-  if (success) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("✅ Đã thêm vào giỏ hàng!")),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ Lỗi khi thêm vào giỏ hàng!")),
-    );
+  try {
+    bool success = await cartProvider.addToCart(newItem);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("✅ Đã thêm vào giỏ hàng!")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Không thể thêm vào giỏ hàng!")),
+      );
+    }
+  } catch (e) {
+    if (e is DioException) {
+      print("🔴 Phản hồi lỗi từ API: ${e.response?.data}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Lỗi: ${e.response?.data}")),
+      );
+    } else {
+      print("🔴 Lỗi không xác định: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Lỗi không xác định!")),
+      );
+    }
   }
 }
+
 
 
 

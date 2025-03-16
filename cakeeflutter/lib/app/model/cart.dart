@@ -13,6 +13,7 @@ class Cart {
     required this.totalPrice,
   });
 
+  /// ✅ `fromJson()` để parse dữ liệu từ API
   factory Cart.fromJson(Map<String, dynamic> json) {
     return Cart(
       id: json['id'] ?? '',
@@ -21,4 +22,32 @@ class Cart {
       totalPrice: (json['totalPrice'] ?? 0).toDouble(),
     );
   }
+
+  /// ✅ `toJson()` để convert thành JSON khi cần
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'items': items.map((item) => item.toJson()).toList(),
+      'totalPrice': totalPrice,
+    };
+  }
+
+  /// ✅ `copyWith()` để cập nhật giỏ hàng mà không cần tạo mới
+  Cart copyWith({
+    String? id,
+    String? userId,
+    List<CartItem>? items,
+    double? totalPrice,
+  }) {
+    return Cart(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      items: items ?? this.items,
+      totalPrice: totalPrice ?? this.totalPrice,
+    );
+  }
+
+  @override
+  String toString() => toJson().toString();
 }

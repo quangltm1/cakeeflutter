@@ -64,8 +64,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             _buildNavItem(Icons.home, 0, 'Trang Chủ'),
             _buildNavItem(Icons.shopping_cart, 1, 'Đơn Hàng'),
             const SizedBox(width: 40), // Chừa khoảng trống cho FAB
-            _buildNavItem(Icons.account_balance_wallet, 2, 'Thu Chi'),  
-            _buildNavItem(Icons.settings, 3, 'Cài Đặt'),
+            _buildNavItem(Icons.account_balance_wallet, 2, 'Doanh Thu'),  
+            _buildNavItem(Icons.settings, 3, 'Tôi'),
           ],
         ),
           ),

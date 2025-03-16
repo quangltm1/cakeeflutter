@@ -9,31 +9,32 @@ class CartProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isProcessing = false;
   Map<String, bool> _isUpdating = {}; // Trạng thái cập nhật từng sản phẩm
+  String? _errorMessage;
 
+  /// ✅ Getter để truy xuất trạng thái
   Cart? get cart => _cart;
   bool get isLoading => _isLoading;
   bool get isProcessing => _isProcessing;
   Map<String, bool> get isUpdating => _isUpdating;
-  int get totalItems => _cart?.items.length ?? 0;
-  double get totalPrice {
-  if (_cart == null || _cart!.items.isEmpty) return 0; // ✅ Kiểm tra null trước khi tính tổng
-  return _cart!.items.fold(0, (sum, item) => sum + (item.total ?? 0));
-}
- // ✅ Cập nhật tổng tiền giỏ hàng
+  String? get errorMessage => _errorMessage;
+  
+  /// ✅ Kiểm tra giỏ hàng trống
+  bool get isCartEmpty => _cart == null || _cart!.items.isEmpty;
+  
+  /// ✅ Lấy tổng tiền từ API, không tự tính
+  double get totalPrice => _cart?.totalPrice ?? 0;
 
   /// 🛒 **Lấy giỏ hàng từ API**
   Future<void> fetchCart() async {
     try {
       _isLoading = true;
+      _errorMessage = null;
       notifyListeners();
 
-      _cart = await _cartService.getCart();
-      if (_cart != null) {
-        _cart!.totalPrice = _cart!.items.fold(0, (sum, item) => sum + item.total); // ✅ Cập nhật tổng tiền khi tải giỏ hàng
-      }
-
+      _cart = await _cartService.getCart(); // Lấy giỏ hàng từ API
       print("✅ Giỏ hàng đã tải: $_cart");
     } catch (e) {
+      _errorMessage = "Lỗi tải giỏ hàng!";
       print("❌ Lỗi lấy giỏ hàng: $e");
     } finally {
       _isLoading = false;
@@ -43,63 +44,49 @@ class CartProvider extends ChangeNotifier {
 
   /// ➕ **Thêm sản phẩm vào giỏ hàng**
   Future<bool> addToCart(CartItem item) async {
-  _isProcessing = true;
-  notifyListeners();
+    _isProcessing = true;
+    notifyListeners();
 
-  bool success = await _cartService.addToCart(item); // Gọi API
-  if (success) {
-    await fetchCart(); // Làm mới giỏ hàng
+    bool success = await _cartService.addToCart(item);
+    if (success) {
+      await fetchCart(); // Cập nhật lại giỏ hàng sau khi thêm
+    }
+
+    _isProcessing = false;
+    notifyListeners();
+    return success;
   }
-
-  _isProcessing = false;
-  notifyListeners();
-  return success; // ✅ Trả về bool để kiểm tra
-}
-
 
   /// 🔄 **Cập nhật số lượng sản phẩm**
   Future<void> updateQuantity(String productId, int newQuantity) async {
-    _isUpdating[productId] = true;
-    notifyListeners();
+  _isUpdating[productId] = true;
+  notifyListeners();
 
-    CartItem? item = _cart?.items.firstWhere(
-      (i) => i.productId == productId,
-      orElse: () => CartItem(
-        productId: productId,
-        cakeId: null,
-        accessoryId: null,
-        quantityCake: 0,
-        quantityAccessory: 0,
-        total: 0,
-        name: '',
-        price: 0,
-        imageUrl: '',
-      ),
-    );
-
-    if (item != null) {
-      // ✅ Cập nhật số lượng và tính lại total cho sản phẩm
-      item = CartItem(
-        productId: item.productId,
-        cakeId: item.cakeId,
-        accessoryId: item.accessoryId,
-        quantityCake: newQuantity,
-        quantityAccessory: item.quantityAccessory,
-        total: item.price * newQuantity + item.price * item.quantityAccessory, // ✅ Tính lại total chính xác
-        name: item.name,
-        price: item.price,
-        imageUrl: item.imageUrl,
-      );
-
-      bool success = await _cartService.updateCartItem(item);
-      if (success) {
-        await fetchCart();
+  if (_cart != null) {
+    List<CartItem> updatedItems = _cart!.items.map((item) {
+      if (item.cakeId == productId) {
+        return item.copyWith(quantityCake: newQuantity); // ✅ Cập nhật số lượng
       }
-    }
+      return item;
+    }).toList();
 
-    _isUpdating[productId] = false;
+    _cart = _cart!.copyWith(items: updatedItems);
     notifyListeners();
   }
+
+  bool success = await _cartService.updateCartItem(
+    _cart!.items.firstWhere((item) => item.cakeId == productId),
+  );
+
+  if (success) {
+    await fetchCart();
+  }
+
+  _isUpdating[productId] = false;
+  notifyListeners();
+}
+
+
 
   /// ❌ **Xóa sản phẩm khỏi giỏ hàng**
   Future<void> removeFromCart(String productId) async {
@@ -136,7 +123,7 @@ class CartProvider extends ChangeNotifier {
 
     bool success = await _cartService.checkout();
     if (success) {
-      await fetchCart(); // ✅ Làm mới giỏ hàng sau khi thanh toán
+      await fetchCart(); // Làm mới giỏ hàng sau khi thanh toán
     }
 
     _isProcessing = false;

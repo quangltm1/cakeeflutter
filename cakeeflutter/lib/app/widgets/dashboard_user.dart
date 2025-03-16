@@ -46,19 +46,19 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Trang Chu',
+            label: 'Trang Chủ',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
-            label: 'Don Hang',
+            label: 'Đơn Hàng',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
-            label: 'Gio Hang',
+            label: 'Giỏ Hàng',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            label: 'Cai Dat',
+            label: 'Tôi',
           ),
         ],
         currentIndex: _selectedIndex,

@@ -8,10 +8,12 @@ class DonHangAdmin extends StatefulWidget {
   _DonHangAdminState createState() => _DonHangAdminState();
 }
 
-class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderStateMixin {
+class _DonHangAdminState extends State<DonHangAdmin>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<dynamic> allBills = [];
-  String? currentShopId; // ✅ ID của shop hiện tại
+  String? currentShopId;
+  bool isLoading = true; // ✅ Biến trạng thái loading
 
   @override
   void initState() {
@@ -20,6 +22,7 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
     _getShopIdAndFetchBills();
   }
 
+  /// 🛠 **Lấy ShopId và đơn hàng**
   Future<void> _getShopIdAndFetchBills() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? shopId = prefs.getString("userId");
@@ -29,25 +32,50 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
       setState(() {
         currentShopId = shopId;
       });
-      _fetchBills(shopId);
+      await _fetchBills(shopId);
     } else {
       print("❌ Không tìm thấy ShopId");
+      setState(() {
+        isLoading = false; // ✅ Tắt trạng thái loading khi lỗi
+      });
     }
   }
 
+  /// 🛒 **Lấy danh sách đơn hàng**
   Future<void> _fetchBills(String shopId) async {
-    try {
-      var response = await Dio().get("https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill");
+  try {
+    if (!mounted) return; // ✅ Kiểm tra widget đã bị dispose chưa
+    setState(() {
+      isLoading = true;
+    });
 
-      if (response.statusCode == 200) {
+    var response = await Dio().get(
+        "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill");
+
+    if (response.statusCode == 200) {
+      List<dynamic> bills = response.data;
+      List<dynamic> shopBills =
+          bills.where((bill) => bill["billShopId"] == shopId).toList();
+
+      print("🔹 Đơn hàng của ShopId $shopId: $shopBills");
+
+      if (mounted) { // ✅ Kiểm tra lại trước khi gọi setState()
         setState(() {
-          allBills = response.data.where((bill) => bill["billShopId"] == shopId).toList();
+          allBills = shopBills;
         });
       }
-    } catch (e) {
-      print("❌ Lỗi lấy danh sách đơn hàng: $e");
+    }
+  } catch (e) {
+    print("❌ Lỗi lấy danh sách đơn hàng: $e");
+  } finally {
+    if (mounted) { // ✅ Kiểm tra lại trước khi gọi setState()
+      setState(() {
+        isLoading = false;
+      });
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -69,30 +97,38 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
           ],
         ),
       ),
-      body: currentShopId == null
-          ? Center(child: CircularProgressIndicator()) // ⏳ Loading nếu chưa lấy được ShopId
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildOrderList(1), // Chờ xử lý
-                _buildOrderList(2), // Đang xử lý
-                _buildOrderList(3), // Đang giao
-                _buildOrderList(0), // Hoàn thành
-              ],
-            ),
+      body: isLoading
+          ? Center(
+              child:
+                  CircularProgressIndicator()) // ⏳ Hiển thị loading nếu đang tải
+          : (allBills.isEmpty
+              ? Center(
+                  child: Text(
+                      "Không có đơn hàng nào.")) // 🛑 Nếu không có đơn hàng
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildOrderList(1), // Chờ xử lý
+                    _buildOrderList(2), // Đang xử lý
+                    _buildOrderList(3), // Đang giao
+                    _buildOrderList(0), // Hoàn thành
+                  ],
+                )),
     );
   }
 
   /// ✅ **Hiển thị danh sách đơn hàng theo trạng thái**
   Widget _buildOrderList(int status) {
-    List<dynamic> filteredBills = allBills.where((bill) => bill["status"] == status).toList();
+    List<dynamic> filteredBills =
+        allBills.where((bill) => bill["status"] == status).toList();
 
     if (filteredBills.isEmpty) {
       return Center(child: Text("Không có đơn hàng nào."));
     }
 
     return RefreshIndicator(
-      onRefresh: () async => _fetchBills(currentShopId!), // ✅ Cập nhật danh sách đơn hàng
+      onRefresh: () async =>
+          _fetchBills(currentShopId!), // ✅ Cập nhật danh sách đơn hàng
       child: ListView.builder(
         itemCount: filteredBills.length,
         itemBuilder: (context, index) {
@@ -105,7 +141,8 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Text("Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
+                  Text(
+                      "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
                   Text("Giao hàng: ${bill["deliveryDate"]}"),
                   Text("Trạng thái: ${_getStatusText(bill["status"])}"),
                 ],
@@ -155,7 +192,8 @@ class _DonHangAdminState extends State<DonHangAdmin> with SingleTickerProviderSt
               Divider(),
               Text("Bánh: ${bill["cakeName"]}"),
               Text("Nội dung: ${bill["cakeContent"]}"),
-              Text("Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
+              Text(
+                  "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
               Text("Giao hàng: ${bill["deliveryDate"]}"),
               Text("Trạng thái: ${_getStatusText(bill["status"])}"),
             ],
