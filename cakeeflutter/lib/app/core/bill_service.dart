@@ -40,50 +40,53 @@ class BillService {
 
   /// 🔹 **Tạo hóa đơn cho khách đã đăng nhập**
   static Future<bool> createBill(Map<String, dynamic> billData) async {
-    try {
-      Response response = await _dio.post(
-        "$baseUrl/CreateBill",
-        data: billData,
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      print("❌ Lỗi tạo đơn hàng: $e");
-      return false;
-    }
+  try {
+    billData["BillReceiveDate"] = DateTime.now().toUtc().toIso8601String(); // 🔥 Gửi đúng format UTC
+    Response response = await _dio.post(
+      "$baseUrl/CreateBill",
+      data: billData,
+    );
+    return response.statusCode == 200;
+  } catch (e) {
+    print("❌ Lỗi tạo đơn hàng: $e");
+    return false;
   }
+}
+
 
   /// 🔹 **Đặt hàng cho khách vãng lai (không cần đăng nhập)**
   Future<bool> placeOrderForGuest({
-    required String name,
-    required String phone,
-    required String address,
-    required String cakeId,
-    required int quantity,
-  }) async {
-    final url = "$baseUrl/CreateBillForGuest";
+  required String name,
+  required String phone,
+  required String address,
+  required String cakeId,
+  required int quantity,
+}) async {
+  final url = "$baseUrl/CreateBillForGuest";
 
-    final data = {
-      "BillDeliveryCustomName": name, // ✅ Tên khách vãng lai
-      "BillDeliveryPhone": phone,
-      "BillDeliveryAddress": address,
-      "BillCakeId": cakeId,
-      "BillCakeQuantity": quantity,
-      "BillStatus": 1, // 🚀 Mặc định trạng thái "Pending"
-    };
+  final data = {
+    "BillDeliveryCustomName": name,
+    "BillDeliveryPhone": phone,
+    "BillDeliveryAddress": address,
+    "BillCakeId": cakeId,
+    "BillCakeQuantity": quantity,
+    "BillStatus": 1,
+    "BillReceiveDate": DateTime.now().toUtc().toIso8601String(), // 🔥 Đảm bảo gửi đúng UTC
+  };
 
-    try {
-      final response = await _dio.post(url, data: data);
-
-      if (response.statusCode == 200) {
-        print("✅ Đặt hàng thành công: ${response.data}");
-        return true;
-      } else {
-        print("❌ API trả về lỗi: ${response.statusCode}");
-        return false;
-      }
-    } catch (e) {
-      print("❌ Lỗi đặt hàng: $e");
+  try {
+    final response = await _dio.post(url, data: data);
+    if (response.statusCode == 200) {
+      print("✅ Đặt hàng thành công: ${response.data}");
+      return true;
+    } else {
+      print("❌ API trả về lỗi: ${response.statusCode}");
       return false;
     }
+  } catch (e) {
+    print("❌ Lỗi đặt hàng: $e");
+    return false;
   }
+}
+
 }

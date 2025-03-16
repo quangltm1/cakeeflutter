@@ -43,39 +43,93 @@ class _DonHangAdminState extends State<DonHangAdmin>
 
   /// 🛒 **Lấy danh sách đơn hàng**
   Future<void> _fetchBills(String shopId) async {
-  try {
-    if (!mounted) return; // ✅ Kiểm tra widget đã bị dispose chưa
-    setState(() {
-      isLoading = true;
-    });
+    try {
+      if (!mounted) return; // ✅ Kiểm tra widget đã bị dispose chưa
+      setState(() {
+        isLoading = true;
+      });
 
-    var response = await Dio().get(
-        "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill");
+      var response = await Dio().get(
+          "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill");
 
-    if (response.statusCode == 200) {
-      List<dynamic> bills = response.data;
-      List<dynamic> shopBills =
-          bills.where((bill) => bill["billShopId"] == shopId).toList();
+      if (response.statusCode == 200) {
+        List<dynamic> bills = response.data;
+        List<dynamic> shopBills =
+            bills.where((bill) => bill["billShopId"] == shopId).toList();
 
-      print("🔹 Đơn hàng của ShopId $shopId: $shopBills");
+        print("🔹 Đơn hàng của ShopId $shopId: $shopBills");
 
-      if (mounted) { // ✅ Kiểm tra lại trước khi gọi setState()
+        if (mounted) {
+          // ✅ Kiểm tra lại trước khi gọi setState()
+          setState(() {
+            allBills = shopBills;
+          });
+        }
+      }
+    } catch (e) {
+      print("❌ Lỗi lấy danh sách đơn hàng: $e");
+    } finally {
+      if (mounted) {
+        // ✅ Kiểm tra lại trước khi gọi setState()
         setState(() {
-          allBills = shopBills;
+          isLoading = false;
         });
       }
     }
-  } catch (e) {
-    print("❌ Lỗi lấy danh sách đơn hàng: $e");
-  } finally {
-    if (mounted) { // ✅ Kiểm tra lại trước khi gọi setState()
-      setState(() {
-        isLoading = false;
-      });
+  }
+
+  void _changeBillStatus(dynamic bill) async {
+    int currentStatus = bill["status"];
+    int newStatus;
+
+    switch (currentStatus) {
+      case 1:
+        newStatus = 2;
+        break;
+      case 2:
+        newStatus = 3;
+        break;
+      case 3:
+        newStatus = 0;
+        break;
+      default:
+        newStatus = 1;
+    }
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString("token"); // 🔹 Lấy token nếu có
+
+      var response = await Dio().put(
+        "https://fitting-solely-fawn.ngrok-free.app/api/Bill/UpdateBillStatus/${bill["id"]}",
+        data:
+            '"$newStatus"', // 🔹 API yêu cầu kiểu string nên phải đặt trong dấu ""
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token", // 🔹 Nếu API yêu cầu token
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          bill["status"] =
+              newStatus; // 🔄 Cập nhật UI sau khi thay đổi thành công
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("✅ Cập nhật trạng thái thành công!")),
+        );
+      } else {
+        throw Exception("Lỗi cập nhật trạng thái");
+      }
+    } catch (e) {
+      print("❌ Lỗi cập nhật trạng thái: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Cập nhật thất bại!")),
+      );
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -127,8 +181,7 @@ class _DonHangAdminState extends State<DonHangAdmin>
     }
 
     return RefreshIndicator(
-      onRefresh: () async =>
-          _fetchBills(currentShopId!), // ✅ Cập nhật danh sách đơn hàng
+      onRefresh: () async => _fetchBills(currentShopId!),
       child: ListView.builder(
         itemCount: filteredBills.length,
         itemBuilder: (context, index) {
@@ -143,14 +196,29 @@ class _DonHangAdminState extends State<DonHangAdmin>
                 children: [
                   Text(
                       "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
-                  Text("Giao hàng: ${bill["deliveryDate"]}"),
+                  Text(
+                      "Ngày đặt: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(bill["receiveDate"]))}"),
+                  Text("Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(bill["deliveryDate"])) : "Chưa có"}"),
                   Text("Trạng thái: ${_getStatusText(bill["status"])}"),
                 ],
               ),
-              trailing: Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                _showOrderDetail(context, bill);
-              },
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min, // Để tránh lỗi tràn ngang
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.info, color: Colors.green),
+                    onPressed: () {
+                      _showOrderDetail(context, bill); // 🟢 Xem chi tiết
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.autorenew, color: Colors.blue),
+                    onPressed: () {
+                      _changeBillStatus(bill); // 🔄 Chuyển trạng thái
+                    },
+                  ),
+                ],
+              ),
             ),
           );
         },
