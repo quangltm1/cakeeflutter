@@ -196,10 +196,10 @@ class _DonHangAdminState extends State<DonHangAdmin>
                 children: [
                   Text(
                       "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
-                  Text(
-                      "Ngày đặt: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(bill["receiveDate"]))}"),
-                  Text("Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(bill["deliveryDate"])) : "Chưa có"}"),
-                  Text("Trạng thái: ${_getStatusText(bill["status"])}"),
+                    Text(
+                      "Ngày đặt: ${bill["receiveDate"] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.tryParse(bill["receiveDate"]) ?? DateTime.now()) : "Chưa có"}"),
+                    Text("Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.tryParse(bill["deliveryDate"]) ?? DateTime.now()) : "Chưa có"}"),
+                    Text("Trạng thái: ${_getStatusText(bill["status"])}"),
                 ],
               ),
               trailing: Row(
@@ -262,7 +262,7 @@ class _DonHangAdminState extends State<DonHangAdmin>
               Text("Nội dung: ${bill["cakeContent"]}"),
               Text(
                   "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
-              Text("Giao hàng: ${bill["deliveryDate"]}"),
+                Text("Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(bill["deliveryDate"])) : "Chưa có"}"),
               Text("Trạng thái: ${_getStatusText(bill["status"])}"),
             ],
           ),
