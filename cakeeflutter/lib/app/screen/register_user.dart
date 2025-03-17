@@ -19,13 +19,48 @@ class _RegisterScreenState extends State<RegisterUserScreen> {
       TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _fullNameFocus = FocusNode();
+  final FocusNode _phoneFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+  final FocusNode _confirmPasswordFocus = FocusNode();
+  
   bool isLoading = false;
   bool isSeller = false;
+  String? phoneError; // 🔹 Biến lưu lỗi số điện thoại nếu đã tồn tại
+  bool isPasswordVisible = false;
+  bool isConfirmPasswordVisible = false;
+  bool phoneToFocus = false;
+  bool passwordToFocus = false;
+  bool confirmPasswordToFocus = false;
+  bool fullNameToFocus = false;
+  bool emailToFocus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneFocus.addListener(() {
+      if (!_phoneFocus.hasFocus && _phoneController.text.isNotEmpty && _phoneController.text.length >= 10) {
+        _checkPhoneExists(_phoneController.text);
+      }
+    });
+    
+  }
+
+  @override
+  void dispose() {
+    _emailFocus.dispose();
+    _fullNameFocus.dispose();
+    _phoneFocus.dispose();
+    _passwordFocus.dispose();
+    _confirmPasswordFocus.dispose();
+    super.dispose();
+  }
 
   /// ✅ **Gửi request đăng ký**
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate())
-      return; // Nếu form không hợp lệ, dừng lại
+    if (!_formKey.currentState!.validate()) return; // Nếu form không hợp lệ, dừng lại
 
     setState(() {
       isLoading = true;
@@ -67,6 +102,26 @@ class _RegisterScreenState extends State<RegisterUserScreen> {
     }
   }
 
+  /// 🔍 **Kiểm tra số điện thoại đã tồn tại**
+  Future<void> _checkPhoneExists(String phone) async {
+    try {
+      var response = await Dio().get(
+        "https://your-api.com/check-phone/$phone",
+      );
+      if (response.data['exists']) {
+        setState(() {
+          phoneError = "❌ Số điện thoại đã được sử dụng!";
+        });
+      } else {
+        setState(() {
+          phoneError = null;
+        });
+      }
+    } catch (e) {
+      print("❌ Lỗi kiểm tra số điện thoại: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,8 +133,6 @@ class _RegisterScreenState extends State<RegisterUserScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(height: 50),
-
-              /// 🔙 **Nút quay lại**
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -94,130 +147,45 @@ class _RegisterScreenState extends State<RegisterUserScreen> {
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 20),
-              // Form(
-              //   key: _formKey,
-              //   child: Column(
-              //     children: [
-              //       _buildTextField(
-              //           _emailController, "Tên đăng nhập", Icons.person),
-              //       _buildTextField(_fullNameController, "Tên đầy đủ",
-              //           Icons.account_circle_sharp),
-              //       _buildTextField(
-              //           _phoneController, "Số điện thoại", Icons.phone),
-              //       _buildTextField(_passwordController, "Mật khẩu", Icons.lock,
-              //           obscure: true),
-              //       _buildTextField(_confirmPasswordController,
-              //           "Xác nhận mật khẩu", Icons.lock,
-              //           obscure: true),
-              //       SizedBox(height: 10),
-              //       Row(
-              //         children: [
-              //           Checkbox(
-              //             value: isSeller,
-              //             onChanged: (bool? value) {
-              //               setState(() {
-              //                 isSeller = value ?? false;
-              //               });
-              //             },
-              //           ),
-              //           Text("Đăng ký cho nhà bán hàng"),
-              //         ],
-              //       ),
-              //       SizedBox(height: 20),
-              //       ElevatedButton(
-              //         onPressed: isLoading ? null : _register,
-              //         style: ElevatedButton.styleFrom(
-              //           backgroundColor: Color(0xFFFFD900),
-              //           shape: RoundedRectangleBorder(
-              //               borderRadius: BorderRadius.circular(30)),
-              //           padding:
-              //               EdgeInsets.symmetric(vertical: 15, horizontal: 50),
-              //         ),
-              //         child: isLoading
-              //             ? CircularProgressIndicator(color: Colors.white)
-              //             : Text("Đăng ký",
-              //                 style: TextStyle(
-              //                     fontSize: 18, fontWeight: FontWeight.bold)),
-              //       ),
-              //     ],
-              //   ),
-              // ),
               Form(
-  key: _formKey,
-  child: Column(
-    children: [
-      _buildTextField(
-        _emailController, 
-        "Tên đăng nhập", 
-        Icons.person, 
-        validator: (value) => value!.isEmpty ? "Vui lòng nhập tên đăng nhập" : null,
-      ),
-      _buildTextField(
-        _fullNameController, 
-        "Tên đầy đủ", 
-        Icons.account_circle_sharp, 
-        maxLength: 50, 
-        validator: (value) => value!.isEmpty ? "Vui lòng nhập tên đầy đủ" : null,
-      ),
-      _buildTextField(
-        _phoneController, 
-        "Số điện thoại", 
-        Icons.phone, 
-        keyboardType: TextInputType.phone, 
-        maxLength: 11,
-        validator: (value) {
-          if (value!.isEmpty) return "Vui lòng nhập số điện thoại";
-          if (!RegExp(r"^\+84\d{8,9}$|^0\d{9,10}$").hasMatch(value)) {
-            return "Vui lòng nhập đúng số điện thoại";
-          }
-          return null;
-        },
-      ),
-      _buildTextField(
-        _passwordController, 
-        "Mật khẩu", 
-        Icons.lock, 
-        obscure: true, 
-        validator: (value) => value!.length < 6 ? "Mật khẩu tối thiểu 6 ký tự" : null,
-      ),
-      _buildTextField(
-        _confirmPasswordController, 
-        "Xác nhận mật khẩu", 
-        Icons.lock, 
-        obscure: true, 
-        validator: (value) => value != _passwordController.text ? "Mật khẩu không khớp" : null,
-      ),
-      SizedBox(height: 20),
-      Row(
-        children: [
-          Checkbox(
-            value: isSeller,
-            onChanged: (bool? value) {
-              setState(() {
-                isSeller = value ?? false;
-              });
-            },
-          ),
-          Text("Đăng ký cho nhà bán hàng"),
-        ],
-      ),
-      SizedBox(height: 20),
-      // ✅ Nút "Đăng ký" đã bị thiếu
-      ElevatedButton(
-        onPressed: isLoading ? null : _register,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFFFFD900),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 50),
-        ),
-        child: isLoading
-            ? CircularProgressIndicator(color: Colors.white)
-            : Text("Đăng ký", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      ),
-    ],
-  ),
-),
-
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction, // ✅ Validate khi nhập
+                child: Column(
+                  children: [
+                    _buildUsernameField(),
+                    _buildFullNameField(),
+                    _buildPhoneField(), // ✅ Trường số điện thoại có validate real-time
+                    _buildPasswordField(),
+                    _buildConfirmPasswordField(),
+                    SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: isSeller,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              isSeller = value ?? false;
+                            });
+                          },
+                        ),
+                        Text("Đăng ký cho nhà bán hàng"),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : _register,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFFFD900),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 50),
+                      ),
+                      child: isLoading
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : Text("Đăng ký", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -225,19 +193,170 @@ class _RegisterScreenState extends State<RegisterUserScreen> {
     );
   }
 
-  Widget _buildTextField(
-      TextEditingController controller, String hintText, IconData icon,
-      {bool obscure = false,
-      String? Function(String?)? validator,
-      TextInputType? keyboardType,
-      int maxLength = 50}) {
+  /// 📱 **Trường nhập số điện thoại với kiểm tra lỗi real-time**
+  Widget _buildPhoneField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _phoneController,
+        keyboardType: TextInputType.phone,
+        maxLength: 11, // ✅ Chặn nhập quá 11 số
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.phone, color: Colors.grey),
+          hintText: "Số điện thoại",
+          filled: true,
+          fillColor: Colors.grey[200],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+          counterText: "", // ✅ Ẩn bộ đếm ký tự
+          errorText: phoneToFocus? phoneError : null, // ✅ Hiển thị lỗi nếu số điện thoại đã tồn tại
+        ),
+        onChanged: (value) {
+          setState(() {
+            phoneToFocus = true;
+          });
+          if (value.length >= 10) {
+            _checkPhoneExists(value); // 🔍 Kiểm tra số điện thoại sau khi nhập đủ số
+          }
+        },
+        validator: (value) {
+          if (value == null) return "Vui lòng nhập số điện thoại";
+          if (!RegExp(r"^\+84\d{8,9}$|^0\d{9,10}$").hasMatch(value)) {
+            return "Vui lòng nhập đúng số điện thoại";
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  /// 📱 **Trường nhập tên đăng nhập với kiểm tra lỗi real-time**
+  Widget _buildUsernameField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _emailController,
+        keyboardType: TextInputType.emailAddress,
+        maxLength: 50,
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.person, color: Colors.grey),
+          hintText: "Tên đăng nhập",
+          filled: true,
+          fillColor: Colors.grey[200],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+          counterText: "",
+        ),
+        validator: (value) {
+          if (value == null) return "Vui lòng nhập tên đăng nhập";
+          if (!RegExp(r"^[a-zA-Z0-9._-]{3,}$").hasMatch(value)) {
+            return "Tên đăng nhập ít nhất 3 ký tự";
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  /// 📱 **Trường nhập tên đầy đủ với kiểm tra lỗi real-time**
+  Widget _buildFullNameField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _fullNameController,
+        keyboardType: TextInputType.name,
+        maxLength: 50,
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.account_circle, color: Colors.grey),
+          hintText: "Tên đầy đủ",
+          filled: true,
+          fillColor: Colors.grey[200],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+          counterText: "",
+        ),
+        validator: (value) {
+          if (value == null) return "Vui lòng nhập tên của bạn";
+          if (value.length < 3) return "Tên đầy đủ phải có ít nhất 3 ký tự";
+          return null;
+        },
+      ),
+    );
+  }
+
+  /// 📱 **Trường nhập mật khẩu và xác nhận mật khẩu với kiểm tra lỗi real-time**
+  Widget _buildPasswordField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _passwordController,
+        obscureText: true,
+        maxLength: 50,
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.lock, color: Colors.grey),
+          hintText: "Mật khẩu",
+          filled: true,
+          fillColor: Colors.grey[200],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+          counterText: "",
+        ),
+        validator: (value) {
+          if (value == null) return "Vui lòng nhập mật khẩu";
+          if (value.length < 6) return "Mật khẩu phải có ít nhất 6 ký tự";
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildConfirmPasswordField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _confirmPasswordController,
+        obscureText: true,
+        maxLength: 50,
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.lock, color: Colors.grey),
+          hintText: "Xác nhận mật khẩu",
+          filled: true,
+          fillColor: Colors.grey[200],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+          counterText: "",
+        ),
+        validator: (value) {
+          if (value == null) return "Vui lòng xác nhận mật khẩu";
+          if (value != _passwordController.text) return "Mật khẩu không khớp";
+          return null;
+        },
+      ),
+    );
+  }
+  
+  
+  
+
+  Widget _buildTextField(TextEditingController controller, String hintText, IconData icon,
+      {bool obscure = false, String? Function(String?)? validator, TextInputType? keyboardType, int maxLength = 50}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextFormField(
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboardType,
-        maxLength: maxLength, // ✅ Giới hạn ký tự
+        maxLength: maxLength,
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: Colors.grey),
           hintText: hintText,
@@ -247,9 +366,9 @@ class _RegisterScreenState extends State<RegisterUserScreen> {
             borderRadius: BorderRadius.circular(30),
             borderSide: BorderSide.none,
           ),
-          counterText: "", // ✅ Ẩn bộ đếm ký tự
+          counterText: "",
         ),
-        validator: validator, // ✅ Áp dụng validator riêng cho từng trường
+        validator: validator,
       ),
     );
   }
