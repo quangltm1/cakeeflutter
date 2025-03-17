@@ -10,7 +10,8 @@ class DonHangPage extends StatefulWidget {
   _DonHangPageState createState() => _DonHangPageState();
 }
 
-class _DonHangPageState extends State<DonHangPage> with SingleTickerProviderStateMixin {
+class _DonHangPageState extends State<DonHangPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final BillService _billService = BillService();
   List<Bill> orders = [];
@@ -20,7 +21,7 @@ class _DonHangPageState extends State<DonHangPage> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this); // 🔥 Tăng lên 5 tab
     _loadBills();
     _startPolling();
   }
@@ -39,33 +40,30 @@ class _DonHangPageState extends State<DonHangPage> with SingleTickerProviderStat
   }
 
   Future<void> _loadBills() async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    String? customerId = prefs.getString("userId");
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? customerId = prefs.getString("userId");
 
-    if (customerId == null || customerId.isEmpty) {
-      throw Exception("User ID không tồn tại");
+      if (customerId == null || customerId.isEmpty) {
+        throw Exception("User ID không tồn tại");
+      }
+
+      final fetchedOrders = await _billService.getBillOfCustom(customerId);
+
+      if (!mounted) return;
+
+      setState(() {
+        orders = fetchedOrders;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+      print("Lỗi khi tải đơn hàng: $e");
     }
-
-    print("Customer ID: $customerId");  // Debugging the customer ID
-
-    final fetchedOrders = await _billService.getBillOfCustom(customerId);
-
-    if (!mounted) return;
-
-    setState(() {
-      orders = fetchedOrders;
-      isLoading = false;
-    });
-  } catch (e) {
-    if (!mounted) return;
-    setState(() {
-      isLoading = false;
-    });
-    print("Lỗi khi tải đơn hàng: $e");
   }
-}
-
 
   List<Bill> getOrdersByStatus(int status) {
     return orders.where((order) => order.status == status).toList();
@@ -78,14 +76,34 @@ class _DonHangPageState extends State<DonHangPage> with SingleTickerProviderStat
         title: Text("Đơn hàng của tôi"),
         centerTitle: true,
         backgroundColor: Color(0xFFFFD900),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: "Đang chờ nhận"),
-            Tab(text: "Đang chuẩn bị"),
-            Tab(text: "Đang giao"),
-            Tab(text: "Đã giao"),
-          ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(48),
+          child: Align(
+            alignment: Alignment.centerLeft, // Căn tab về bên trái
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true, // Tránh bị co ngắn
+              tabAlignment:
+                  TabAlignment.start, // Đảm bảo tab đầu tiên nằm sát trái
+              onTap: (index) {
+                setState(() {});
+              },
+              tabs: [
+                Tab(
+                    text:
+                        _tabController.index == 0 ? "Tất cả đơn" : "Tất cả.."),
+                Tab(
+                    text:
+                        _tabController.index == 1 ? "Đang chờ nhận" : "Đang.."),
+                Tab(
+                    text: _tabController.index == 2
+                        ? "Đang chuẩn bị"
+                        : "Đang c.."),
+                Tab(text: _tabController.index == 3 ? "Đang giao" : "Đang g.."),
+                Tab(text: _tabController.index == 4 ? "Đã giao" : "Đã gi.."),
+              ],
+            ),
+          ),
         ),
       ),
       body: isLoading
@@ -93,6 +111,7 @@ class _DonHangPageState extends State<DonHangPage> with SingleTickerProviderStat
           : TabBarView(
               controller: _tabController,
               children: [
+                _buildOrderList(orders), // 🔥 Tab "Tất cả đơn"
                 _buildOrderList(getOrdersByStatus(1)), // Đang chờ nhận
                 _buildOrderList(getOrdersByStatus(2)), // Đang chuẩn bị
                 _buildOrderList(getOrdersByStatus(3)), // Đang giao

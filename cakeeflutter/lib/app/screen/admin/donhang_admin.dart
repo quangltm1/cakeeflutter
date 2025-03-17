@@ -196,14 +196,15 @@ class _DonHangAdminState extends State<DonHangAdmin>
                 children: [
                   Text(
                       "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
-                    Text(
-                      "Ngày đặt: ${bill["receiveDate"] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.tryParse(bill["receiveDate"]) ?? DateTime.now()) : "Chưa có"}"),
-                    Text("Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.tryParse(bill["deliveryDate"]) ?? DateTime.now()) : "Chưa có"}"),
-                    Text("Trạng thái: ${_getStatusText(bill["status"])}"),
+                  Text(
+                      "Ngày đặt: ${bill["receiveDate"] != null ? DateFormat('dd/MM/yyyy').format(DateTime.tryParse(bill["receiveDate"]) ?? DateTime.now()) : "Chưa có"}"),
+                  Text(
+                      "Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy').format(DateTime.tryParse(bill["deliveryDate"]) ?? DateTime.now()) : "Chưa có"}"),
+                  Text("Trạng thái: ${_getStatusText(bill["status"])}"),
                 ],
               ),
               trailing: Row(
-                mainAxisSize: MainAxisSize.min, // Để tránh lỗi tràn ngang
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: Icon(Icons.info, color: Colors.green),
@@ -211,12 +212,14 @@ class _DonHangAdminState extends State<DonHangAdmin>
                       _showOrderDetail(context, bill); // 🟢 Xem chi tiết
                     },
                   ),
-                  IconButton(
-                    icon: Icon(Icons.autorenew, color: Colors.blue),
-                    onPressed: () {
-                      _changeBillStatus(bill); // 🔄 Chuyển trạng thái
-                    },
-                  ),
+                  if (status !=
+                      0) // ❌ Ẩn nút chuyển trạng thái nếu đơn đã hoàn thành
+                    IconButton(
+                      icon: Icon(Icons.autorenew, color: Colors.blue),
+                      onPressed: () {
+                        _changeBillStatus(bill); // 🔄 Chuyển trạng thái
+                      },
+                    ),
                 ],
               ),
             ),
@@ -259,10 +262,12 @@ class _DonHangAdminState extends State<DonHangAdmin>
               Text("Ghi chú: ${bill["note"]}"),
               Divider(),
               Text("Bánh: ${bill["cakeName"]}"),
+              Text("Số lượng: ${bill["quantity"]}"),
               Text("Nội dung: ${bill["cakeContent"]}"),
               Text(
                   "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
-                Text("Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(bill["deliveryDate"])) : "Chưa có"}"),
+              Text(
+                  "Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(bill["deliveryDate"])) : "Chưa có"}"),
               Text("Trạng thái: ${_getStatusText(bill["status"])}"),
             ],
           ),

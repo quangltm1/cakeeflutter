@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -18,35 +19,85 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
+  final _formKey = GlobalKey<FormState>(); // 🔥 Thêm key cho form
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
-  final TextEditingController _contentController = TextEditingController(); // Bill content
+  final TextEditingController _contentController = TextEditingController();
   int _quantity = 1;
   bool _isLoading = false;
-  String? _shopId; // Variable to store shopId
+  String? _shopId;
 
   @override
   void initState() {
     super.initState();
-    _getShopId(); // Retrieve shopId when the page is initialized
+    _getShopId();
+    _getUserPhone();
   }
 
-  // Get shopId from SharedPreferences
+  Future<void> _getUserPhone() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null && token.isNotEmpty) {
+      try {
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+        String? phone = decodedToken["phone_number"];
+
+        if (phone != null && phone.isNotEmpty) {
+          await prefs.setString('phone', phone);
+          setState(() {
+            _phoneController.text = phone;
+          });
+        }
+      } catch (e) {
+        print("❌ Lỗi khi giải mã token: $e");
+      }
+    }
+  }
+
   Future<void> _getShopId() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _shopId = prefs.getString('userId'); // Retrieve shopId
+      _shopId = prefs.getString('userId');
     });
   }
 
-  // Place order
+  // 🔥 Hàm kiểm tra số điện thoại hợp lệ
+  String? _phoneError; // 🔥 Biến lưu lỗi hiển thị ngay
+
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return "Vui lòng nhập số điện thoại";
+    }
+
+    final phoneRegex = RegExp(r'^\+?[0-9]{10,11}$');
+    if (!phoneRegex.hasMatch(value)) {
+      return "Vui lòng nhập đúng số điện thoại (10-11 số)";
+    }
+
+    if (RegExp(r'^[1-9]').hasMatch(value)) {
+      return "Số điện thoại phải bắt đầu bằng +84 hoặc 0";
+    }
+
+    if (value.startsWith('+') && !value.startsWith('+84')) {
+      return "Số điện thoại phải bắt đầu bằng +84 hoặc 0";
+    }
+
+    return null; // ✅ Hợp lệ
+  }
+
+  // 🔥 **Hàm validate địa chỉ**
+  String? _validateAddress(String? value) {
+    if (value == null || value.isEmpty) {
+      return "Vui lòng nhập địa chỉ";
+    }
+    return null;
+  }
+
   Future<void> _placeOrder() async {
-    if (_addressController.text.isEmpty || _phoneController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Vui lòng nhập đầy đủ thông tin!")),
-      );
-      return;
+    if (!_formKey.currentState!.validate()) {
+      return; // Dừng nếu form không hợp lệ
     }
 
     if (_shopId == null) {
@@ -62,7 +113,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     final dio = Dio();
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token'); // Get token from shared preferences
+    final token = prefs.getString('token');
 
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,7 +122,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       return;
     }
 
-    final url = "https://fitting-solely-fawn.ngrok-free.app/api/Bill/CreateBill";
+    final url =
+        "https://fitting-solely-fawn.ngrok-free.app/api/Bill/CreateBill";
 
     final data = {
       "BillDeliveryAddress": _addressController.text,
@@ -80,7 +132,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       "BillCakeQuantity": _quantity,
       "BillNote": _noteController.text,
       "BillCakeContent": _contentController.text,
-      "BillShopId": _shopId,  // Include shopId in the request
+      "BillShopId": _shopId,
     };
 
     try {
@@ -88,7 +140,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         url,
         data: data,
         options: Options(headers: {
-          "Authorization": "Bearer $token", // Include token in header
+          "Authorization": "Bearer $token",
         }),
       );
 
@@ -117,78 +169,89 @@ class _CheckoutPageState extends State<CheckoutPage> {
       appBar: AppBar(title: Text("Thanh toán")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text("Bánh: ${widget.cakeName}", style: TextStyle(fontSize: 20)),
-            SizedBox(height: 20),
-            
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Số lượng: $_quantity", style: TextStyle(fontSize: 16)),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.remove),
-                      onPressed: () {
-                        setState(() {
-                          if (_quantity > 1) _quantity--;
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.add),
-                      onPressed: () {
-                        setState(() {
-                          _quantity++;
-                        });
-                      },
-                    ),
-                  ],
+        child: Form(
+          key: _formKey, // 🔥 Thêm formKey để validate
+          child: Column(
+            children: [
+              Text("Bánh: ${widget.cakeName}", style: TextStyle(fontSize: 20)),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Số lượng: $_quantity", style: TextStyle(fontSize: 16)),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.remove),
+                        onPressed: () {
+                          setState(() {
+                            if (_quantity > 1) _quantity--;
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.add),
+                        onPressed: () {
+                          setState(() {
+                            _quantity++;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              TextFormField(
+                controller: _addressController,
+                decoration: InputDecoration(labelText: "Địa chỉ giao hàng"),
+                maxLength: 250, 
+                validator: _validateAddress, // 🔥 Thêm validate địa chỉ
+              ),
+              TextFormField(
+                controller: _phoneController,
+                decoration: InputDecoration(
+                  labelText: "Số điện thoại",
+                  errorText: _phoneError, // 🔥 Hiển thị lỗi nếu nhập sai
                 ),
-              ],
-            ),
-            
-            TextField(
-              controller: _addressController,
-              decoration: InputDecoration(labelText: "Địa chỉ giao hàng"),
-            ),
-            
-            TextField(
-              controller: _phoneController,
-              decoration: InputDecoration(labelText: "Số điện thoại"),
-              keyboardType: TextInputType.phone,
-            ),
-            
-            TextField(
-              controller: _noteController,
-              decoration: InputDecoration(labelText: "Ghi chú đơn hàng"),
-            ),
-            
-            TextField(
-              controller: _contentController,
-              decoration: InputDecoration(labelText: "Nội dung bánh"),
-            ),
-            
-            SizedBox(height: 20),
-            
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _placeOrder,
-                  child: _isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text("🛒 Đặt hàng"),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("❌ Hủy"),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                ),
-              ],
-            ),
-          ],
+                keyboardType: TextInputType.phone,
+                maxLength: 11, // 🔥 Giới hạn số lượng ký tự nhập tối đa 11 số
+                onChanged: (value) {
+                  setState(() {
+                    _phoneError =
+                        _validatePhone(value); // 🔥 Kiểm tra lỗi ngay khi nhập
+                  });
+                },
+              ),
+              TextFormField(
+                controller: _noteController,
+                decoration: InputDecoration(labelText: "Ghi chú đơn hàng"),
+                maxLength: 250, 
+              ),
+              TextFormField(
+                controller: _contentController,
+                decoration: InputDecoration(labelText: "Nội dung bánh"),
+                maxLength: 250,
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _placeOrder,
+                    child: _isLoading
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text("🛒 Đặt hàng"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("❌ Hủy"),
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

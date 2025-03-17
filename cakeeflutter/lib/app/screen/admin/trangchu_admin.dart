@@ -20,11 +20,20 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
   int pendingOrders = 0;
   int newOrders = 0;
 
+  CancelToken _cancelToken = CancelToken();
+
   @override
   void initState() {
     super.initState();
     _fetchUser();
     _getShopIdAndFetchBills();
+  }
+
+  @override
+  void dispose() {
+    _cancelToken.cancel(
+        "Widget bị hủy, dừng request"); // 🔥 Hủy request khi widget bị dispose
+    super.dispose();
   }
 
   Future<void> _getShopIdAndFetchBills() async {
@@ -47,28 +56,32 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
 
     try {
       var response = await Dio().get(
-          "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill");
+        "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill",
+        cancelToken: _cancelToken, // 🔥 Thêm CancelToken vào request
+      );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && mounted) {
         List<dynamic> bills = response.data;
         List<dynamic> shopBills =
             bills.where((bill) => bill["billShopId"] == shopId).toList();
 
-        if (mounted) {
-          setState(() {
-            allBills = shopBills;
-            completedOrders =
-                shopBills.where((bill) => bill["status"] == 0).length;
-            pendingOrders = shopBills
-                .where((bill) => bill["status"] == 2 || bill["status"] == 3)
-                .length;
-            newOrders = shopBills.where((bill) => bill["status"] == 1).length;
-            isLoading = false;
-          });
-        }
+        setState(() {
+          allBills = shopBills;
+          completedOrders =
+              shopBills.where((bill) => bill["status"] == 0).length;
+          pendingOrders = shopBills
+              .where((bill) => bill["status"] == 2 || bill["status"] == 3)
+              .length;
+          newOrders = shopBills.where((bill) => bill["status"] == 1).length;
+          isLoading = false;
+        });
       }
     } catch (e) {
-      print("❌ Lỗi lấy danh sách đơn hàng: $e");
+      if (e is DioException && CancelToken.isCancel(e)) {
+        print("⚠ Request đã bị hủy: $e");
+      } else {
+        print("❌ Lỗi lấy danh sách đơn hàng: $e");
+      }
       if (mounted) {
         setState(() {
           isLoading = false;
