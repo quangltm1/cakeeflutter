@@ -134,6 +134,7 @@ class _DonHangAdminState extends State<DonHangAdmin>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text("Quản lý đơn hàng"),
         centerTitle: true,
@@ -188,8 +189,10 @@ class _DonHangAdminState extends State<DonHangAdmin>
           var bill = filteredBills[index];
           return Card(
             margin: EdgeInsets.all(10),
+            color: Colors.white, // 🟢 Đặt màu nền trắng cho Card
+            elevation: 3,
             child: ListTile(
-              leading: Icon(Icons.receipt, color: Colors.orange),
+              leading: getOrderStatusIcon(bill["status"]),
               title: Text("Khách: ${bill["customName"] ?? "Chưa có"}"),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,6 +232,22 @@ class _DonHangAdminState extends State<DonHangAdmin>
     );
   }
 
+  Icon getOrderStatusIcon(int status) {
+    switch (status) {
+      case 1:
+        return Icon(Icons.hourglass_top, color: Colors.orange); // Chờ xử lý
+      case 2:
+        return Icon(Icons.build_circle, color: Colors.blue); // Đang xử lý
+      case 3:
+        return Icon(Icons.local_shipping, color: Colors.green); // Đang giao
+      case 0:
+        return Icon(Icons.check_circle, color: Colors.teal); // Hoàn thành
+      default:
+        return Icon(Icons.help_outline,
+            color: Colors.grey); // Trạng thái không xác định
+    }
+  }
+
   /// ✅ **Chuyển `BillStatus` thành chữ dễ hiểu**
   String _getStatusText(int status) {
     switch (status) {
@@ -251,6 +270,7 @@ class _DonHangAdminState extends State<DonHangAdmin>
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text("Chi tiết đơn hàng"),
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

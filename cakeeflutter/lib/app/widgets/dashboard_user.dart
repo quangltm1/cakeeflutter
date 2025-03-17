@@ -42,34 +42,40 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         },
         children: _widgetOptions,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Trang Chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: 'Đơn Hàng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Giỏ Hàng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Tôi',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFFFFD900),
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        onTap: _onItemTapped,
-        backgroundColor: Color(0xFFFBFBFB),
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
-        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20.0),
+          topRight: Radius.circular(20.0),
+        ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Trang Chủ',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_bag),
+              label: 'Đơn Hàng',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart),
+              label: 'Giỏ Hàng',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Tôi',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: const Color(0xFFFFD900),
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: true,
+          onTap: _onItemTapped,
+          backgroundColor: const Color(0xFFFBFBFB),
+          type: BottomNavigationBarType.fixed,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+        ),
       ),
     );
   }

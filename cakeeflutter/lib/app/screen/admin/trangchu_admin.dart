@@ -50,71 +50,73 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
   }
 
   Future<void> _fetchBills(String shopId) async {
-    setState(() {
-      isLoading = true;
-    });
+  if (!mounted) return; // Kiểm tra widget có còn tồn tại không
 
-    try {
-      var response = await Dio().get(
-        "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill",
-        cancelToken: _cancelToken, // 🔥 Thêm CancelToken vào request
-      );
+  setState(() {
+    isLoading = true;
+  });
 
-      if (response.statusCode == 200 && mounted) {
-        List<dynamic> bills = response.data;
-        List<dynamic> shopBills =
-            bills.where((bill) => bill["billShopId"] == shopId).toList();
+  try {
+    var response = await Dio().get(
+      "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill",
+      cancelToken: _cancelToken, // 🔥 Thêm CancelToken vào request
+    );
 
+    if (response.statusCode == 200 && mounted) {
+      List<dynamic> bills = response.data;
+      List<dynamic> shopBills =
+          bills.where((bill) => bill["billShopId"] == shopId).toList();
+
+      if (mounted) {
         setState(() {
           allBills = shopBills;
-          completedOrders =
-              shopBills.where((bill) => bill["status"] == 0).length;
-          pendingOrders = shopBills
-              .where((bill) => bill["status"] == 2 || bill["status"] == 3)
-              .length;
+          completedOrders = shopBills.where((bill) => bill["status"] == 0).length;
+          pendingOrders = shopBills.where((bill) => bill["status"] == 2 || bill["status"] == 3).length;
           newOrders = shopBills.where((bill) => bill["status"] == 1).length;
           isLoading = false;
         });
       }
-    } catch (e) {
-      if (e is DioException && CancelToken.isCancel(e)) {
-        print("⚠ Request đã bị hủy: $e");
-      } else {
-        print("❌ Lỗi lấy danh sách đơn hàng: $e");
-      }
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+    }
+  } catch (e) {
+    if (e is DioException && CancelToken.isCancel(e)) {
+      print("⚠ Request đã bị hủy: $e");
+    } else {
+      print("❌ Lỗi lấy danh sách đơn hàng: $e");
+    }
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
+}
+
 
   Future<void> _fetchUser() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
 
-    if (token != null) {
-      User? user = await apiRepository.current(token);
-      if (mounted) {
-        setState(() {
-          fullName = user?.fullName ?? "Không có tên";
-        });
-      } else {
-        setState(() {
-          fullName = "Lỗi tải dữ liệu";
-        });
-      }
-    } else {
+  if (token != null) {
+    User? user = await apiRepository.current(token);
+    if (mounted) {
+      setState(() {
+        fullName = user?.fullName ?? "Không có tên";
+      });
+    }
+  } else {
+    if (mounted) {
       setState(() {
         fullName = "Chưa đăng nhập";
       });
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: isLoading
             ? Center(
@@ -194,6 +196,7 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
           ),
           SizedBox(height: 16),
 
+          
           // Danh sách chức năng
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),

@@ -33,7 +33,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFBFB),
+      backgroundColor: Colors.grey[100],
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
@@ -52,12 +52,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: SafeArea(
+        
         child: BottomAppBar(
           shape: const CircularNotchedRectangle(),
-          notchMargin: 6.0,
+          color: Colors.grey[200],
+          notchMargin: 4.0,
           child: Container(
         height: 60,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        color: Colors.grey[200],
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[

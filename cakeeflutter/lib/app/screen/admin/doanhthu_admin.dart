@@ -14,6 +14,7 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
 
   DateTime? _startDate;
   DateTime? _endDate;
+  List<dynamic> _filteredBills = []; // ✅ Danh sách bill đã lọc
 
   @override
   void initState() {
@@ -45,6 +46,8 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
 
   /// 🛠 **Gọi API lấy doanh thu & số lượng bánh đã bán**
   Future<void> _fetchRevenueData() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
     });
@@ -57,37 +60,41 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
         List<dynamic> bills = response.data;
         double revenue = 0.0;
         double cakesSold = 0.0;
+        List<dynamic> filteredBills = [];
 
         for (var bill in bills) {
-          if (bill["status"] == 0) {
-            // Chỉ tính đơn đã hoàn thành
-            DateTime billDate = DateTime.parse(bill["deliveryDate"]);
+          DateTime billDate = DateTime.parse(bill["deliveryDate"]);
 
-            // Nếu có lọc theo ngày
+          if (bill["status"] == 0) {
             if (_startDate != null && _endDate != null) {
-              if (billDate.isBefore(_startDate!) ||
-                  billDate.isAfter(_endDate!)) {
-                continue; // Bỏ qua đơn hàng không nằm trong khoảng thời gian
+              DateTime adjustedEndDate = _endDate!.add(Duration(days: 1)); // ✅ Cộng thêm 1 ngày
+
+              if (billDate.isBefore(_startDate!) || billDate.isAfter(adjustedEndDate)) {
+                continue;
               }
             }
 
             revenue += (bill["total"] as num).toDouble();
             cakesSold += (bill["quantity"] as num).toDouble();
+            filteredBills.add(bill); // ✅ Thêm bill vào danh sách lọc
           }
         }
 
+        if (mounted) {
+          setState(() {
+            _totalRevenue = revenue.toInt();
+            _totalCakesSold = cakesSold.toInt();
+            _filteredBills = filteredBills; // ✅ Lưu danh sách bill sau khi lọc
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _totalRevenue = revenue.toInt();
-          _totalCakesSold = cakesSold.toInt();
-
           _isLoading = false;
         });
       }
-    } catch (e) {
-      print("❌ Lỗi lấy doanh thu: $e");
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -95,55 +102,50 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Doanh Thu',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        title: Text('Doanh Thu', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Color(0xFFFFD900),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       body: _isLoading
-          ? Center(
-              child:
-                  CircularProgressIndicator()) // Hiển thị loading khi gọi API
-          : Padding(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildDateFilter(),
-                  SizedBox(height: 20),
-                  _buildStatCard(
-                      "📊 Tổng Doanh Thu", "$_totalRevenue VNĐ", Colors.green),
-                  SizedBox(height: 10),
-                  _buildStatCard("🎂 Số Bánh Đã Bán", "$_totalCakesSold cái",
-                      Colors.orange),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _fetchRevenueData, // Cập nhật dữ liệu
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding:
-                          EdgeInsets.symmetric(vertical: 12, horizontal: 30),
-                    ),
-                    child: Text("🔄 Lọc Dữ Liệu",
-                        style: TextStyle(fontSize: 16, color: Colors.white)),
-                  ),
-                ],
-              ),
+          ? Center(child: CircularProgressIndicator()) // ✅ Hiển thị loading khi gọi API
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDateFilter(),
+                _buildRevenueSummary(),
+                SizedBox(height: 10),
+                _filteredBills.isEmpty
+                    ? Expanded(child: Center(child: Text("Không có đơn hàng nào trong khoảng thời gian này!")))
+                    : Expanded(child: _buildBillList()), // ✅ Hiển thị danh sách bill
+              ],
             ),
     );
   }
 
-  /// 📌 **Bộ lọc ngày**
+  /// 📌 **Bộ lọc ngày + Nút Lọc**
   Widget _buildDateFilter() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildDateButton(
-            "📅 Từ ngày", _startDate, () => _selectDate(context, true)),
-        _buildDateButton(
-            "📅 Đến ngày", _endDate, () => _selectDate(context, false)),
-      ],
+    return Container(
+      color: Colors.grey[100],
+      foregroundDecoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            _buildDateButton("📅 Từ ngày", _startDate, () => _selectDate(context, true)),
+            SizedBox(width: 10),
+            _buildDateButton("📅 Đến ngày", _endDate, () => _selectDate(context, false)),
+            SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: _fetchRevenueData,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: Text("Lọc", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -153,17 +155,12 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 5),
           padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(10),
-          ),
+          decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                  date != null ? DateFormat('dd/MM/yyyy').format(date) : title),
+              Text(date != null ? DateFormat('dd/MM/yyyy').format(date) : title),
               Icon(Icons.calendar_today, size: 16),
             ],
           ),
@@ -172,19 +169,60 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
     );
   }
 
+  /// 📌 **Hiển thị tổng doanh thu & số lượng bánh đã bán**
+  Widget _buildRevenueSummary() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(child: _buildStatCard("📊 Doanh Thu", "$_totalRevenue VNĐ", Colors.green)),
+          SizedBox(width: 10),
+          Expanded(child: _buildStatCard("🎂 Đã Bán", "$_totalCakesSold cái", Colors.orange)),
+        ],
+      ),
+    );
+  }
+
   /// 📌 **Widget hiển thị số liệu**
   Widget _buildStatCard(String title, String value, Color color) {
     return Card(
-      elevation: 4,
+      elevation: 3,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: Icon(Icons.pie_chart, color: color, size: 30),
-        title: Text(title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        trailing: Text(value,
-            style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+      child: Padding(
+        padding: EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+            SizedBox(height: 5),
+            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
+    );
+  }
+
+  /// 📌 **Danh sách đơn hàng đã lọc**
+  Widget _buildBillList() {
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _filteredBills.length,
+      itemBuilder: (context, index) {
+        var bill = _filteredBills[index];
+        return Card(
+          margin: EdgeInsets.only(bottom: 10),
+          elevation: 3,
+          color: Colors.white,
+          child: ListTile(
+            title: Text("🎂 Bánh: ${bill["cakeName"]}"),
+            subtitle: Text("📅 Ngày giao: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(bill["deliveryDate"]))}\n"
+                "💰 Tổng tiền: ${bill["total"]} VNĐ\n"
+                "📦 Số lượng: ${bill["quantity"]} cái"),
+            trailing: Icon(Icons.check_circle, color: Colors.green),
+          ),
+        );
+      },
     );
   }
 }
