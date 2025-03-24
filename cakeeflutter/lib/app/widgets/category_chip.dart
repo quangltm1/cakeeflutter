@@ -4,7 +4,7 @@ class CategoryChip extends StatelessWidget {
   final String label;
   final IconData icon;
 
-  CategoryChip({required this.label, required this.icon});
+  const CategoryChip({super.key, required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) {

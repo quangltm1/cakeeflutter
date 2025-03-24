@@ -6,17 +6,17 @@ import '../../../core/base_service.dart';
 class AcessoryDetailScreen extends StatefulWidget {
   final String? acessoryId;
 
-  AcessoryDetailScreen({this.acessoryId});
+  const AcessoryDetailScreen({super.key, this.acessoryId});
 
   @override
-  _AcessoryDetailScreenState createState() => _AcessoryDetailScreenState();
+  AcessoryDetailScreenState createState() => AcessoryDetailScreenState();
 }
 
-class _AcessoryDetailScreenState extends State<AcessoryDetailScreen> {
+class AcessoryDetailScreenState extends State<AcessoryDetailScreen> {
   Acessory? _acessory;
   bool _isLoading = false;
-  TextEditingController _acessoryNameController = TextEditingController();
-  TextEditingController _acessoryPriceController = TextEditingController();
+  final TextEditingController _acessoryNameController = TextEditingController();
+  final TextEditingController _acessoryPriceController = TextEditingController();
   String? _userId;
 
   @override

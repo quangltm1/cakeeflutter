@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:cakeeflutter/app/screen/user/cake_details.dart';
+import 'package:cakeeflutter/app/screen/user/giohang_user.dart';
 import 'package:cakeeflutter/app/widgets/dashboard_user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +12,7 @@ import 'package:cakeeflutter/app/screen/admin/category/quanlycategory.dart';
 import 'package:cakeeflutter/app/screen/admin/cake/quanlycake.dart';
 import 'package:cakeeflutter/app/screen/login.dart';
 import 'package:cakeeflutter/app/screen/welcom_screen.dart';
+import 'package:window_size/window_size.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -20,6 +25,11 @@ void main() {
       child: const MyApp(),
     ),
   );
+
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    setWindowMinSize(const Size(430, 932));  // Kích thước nhỏ nhất
+    setWindowMaxSize(const Size(430, 932)); // Kích thước lớn nhất
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -43,6 +53,7 @@ class MyApp extends StatelessWidget {
         '/cake': (context) => QuanLyCake(),
         '/danh-muc': (context) => QuanLyCategory(),
         '/size-banh': (context) => QuanLyCakeSize(),
+        '/gio-hang': (context) => CartPage(),
       },
     );
   }

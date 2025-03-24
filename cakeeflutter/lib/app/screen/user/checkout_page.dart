@@ -5,20 +5,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class CheckoutPage extends StatefulWidget {
   final String cakeId;
-  final String userId;
   final String cakeName;
+  final String userId;
 
-  CheckoutPage({
+  const CheckoutPage({
+    super.key,
     required this.cakeId,
-    required this.userId,
     required this.cakeName,
+    required this.userId,
   });
 
   @override
-  _CheckoutPageState createState() => _CheckoutPageState();
+  CheckoutPageState createState() => CheckoutPageState();
 }
 
-class _CheckoutPageState extends State<CheckoutPage> {
+
+class CheckoutPageState extends State<CheckoutPage> {
   final _formKey = GlobalKey<FormState>(); // 🔥 Thêm key cho form
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();

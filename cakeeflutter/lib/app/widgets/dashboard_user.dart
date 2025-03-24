@@ -8,10 +8,10 @@ class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
 
   @override
-  _UserHomeScreenState createState() => _UserHomeScreenState();
+  UserHomeScreenState createState() => UserHomeScreenState();
 }
 
-class _UserHomeScreenState extends State<UserHomeScreen> {
+class UserHomeScreenState extends State<UserHomeScreen> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 

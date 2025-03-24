@@ -10,13 +10,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class CakeDetailPage extends StatefulWidget {
   final Map<String, dynamic> product;
 
-  CakeDetailPage({required this.product});
+  const CakeDetailPage({super.key, required this.product});
 
   @override
-  _CakeDetailPageState createState() => _CakeDetailPageState();
+  CakeDetailPageState createState() => CakeDetailPageState();
 }
 
-class _CakeDetailPageState extends State<CakeDetailPage> {
+class CakeDetailPageState extends State<CakeDetailPage> {
   int soldQuantity = 0; // 🔹 Lưu số lượng bánh đã bán
 
   @override
@@ -25,7 +25,6 @@ class _CakeDetailPageState extends State<CakeDetailPage> {
     _fetchCakeSold(); // Gọi API lấy số lượng bánh đã bán
   }
 
-  /// 🛒 **Gọi API lấy số lượng bánh đã bán**
   /// 🛒 **Gọi API lấy số lượng bánh đã bán**
 Future<void> _fetchCakeSold() async {
   try {
@@ -47,7 +46,8 @@ Future<void> _fetchCakeSold() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.product['cakeName'] ?? 'Chi tiết sản phẩm')),
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(backgroundColor: Colors.grey[100],),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -73,7 +73,13 @@ Future<void> _fetchCakeSold() async {
                           widget.product['cakeName'] ?? 'Không có tên',
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
+                        Divider(),
                         SizedBox(height: 5),
+                        Text(
+                          "${widget.product['cakePrice'] ?? '0'} VNĐ",
+                          style: TextStyle(color: Colors.red, fontSize: 22, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 10),
                         Row(
                           children: [
                             Icon(Icons.star, color: Colors.yellow, size: 20),
@@ -83,11 +89,7 @@ Future<void> _fetchCakeSold() async {
                           ],
                         ),
                         SizedBox(height: 10),
-                        Text(
-                          "${widget.product['cakePrice'] ?? '0'} VNĐ",
-                          style: TextStyle(color: Colors.red, fontSize: 22, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 10),
+                        Divider(),
                         Text(
                           widget.product['cakeDescription'] ?? 'Mô tả sản phẩm chưa có.',
                           style: TextStyle(fontSize: 16),
@@ -109,13 +111,19 @@ Future<void> _fetchCakeSold() async {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => _addToCart(context),
-                    child: Text("🛒 Thêm vào giỏ hàng"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFFFD900),
+                  ),
+                  onPressed: () => _addToCart(context),
+                  child: Text("🛒 Thêm vào giỏ hàng"),
                   ),
                 ),
                 SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFFFD900),
+                  ),
                     onPressed: () => _buyNow(context),
                     child: Text("⚡ Mua ngay"),
                   ),

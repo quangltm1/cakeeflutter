@@ -8,10 +8,10 @@ class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
 
   @override
-  _AdminHomeScreenState createState() => _AdminHomeScreenState();
+  AdminHomeScreenState createState() => AdminHomeScreenState();
 }
 
-class _AdminHomeScreenState extends State<AdminHomeScreen> {
+class AdminHomeScreenState extends State<AdminHomeScreen> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
@@ -95,7 +95,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             curve: Curves.easeInOut,
             decoration: BoxDecoration(
               color: isSelected
-                  ? const Color(0xFFFFD900).withOpacity(0.2)
+                  ? const Color(0xFFFFD900).withAlpha((0.2 * 255).toInt())
                   : Colors.transparent,
               shape: BoxShape.circle,
             ),

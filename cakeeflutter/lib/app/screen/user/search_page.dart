@@ -1,13 +1,16 @@
 import 'package:cakeeflutter/app/screen/user/cake_details.dart';
 import 'package:flutter/material.dart';
 import 'package:cakeeflutter/app/core/cake_service.dart';
+import 'dart:developer';
 
 class SearchPage extends StatefulWidget {
+  const SearchPage({super.key});
+
   @override
-  _SearchPageState createState() => _SearchPageState();
+  SearchPageState createState() => SearchPageState();
 }
 
-class _SearchPageState extends State<SearchPage> {
+class SearchPageState extends State<SearchPage> {
   final CakeService _cakeService = CakeService();
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _searchResults = [];
@@ -32,7 +35,7 @@ class _SearchPageState extends State<SearchPage> {
         _searchResults = results;
       });
     } catch (e) {
-      print("Search error: $e");
+      log("Search error: $e");
     } finally {
       setState(() {
         _isLoading = false;
@@ -43,7 +46,9 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Color(0xFFFFD900),
         title: Row(
           children: [
             Expanded(
@@ -58,6 +63,7 @@ class _SearchPageState extends State<SearchPage> {
                   autofocus: true,
                   decoration: InputDecoration(
                     hintText: 'Nhập tên bánh...',
+                    hintStyle: TextStyle(color: Colors.grey),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(horizontal: 15),
                   ),
@@ -111,7 +117,7 @@ class _SearchPageState extends State<SearchPage> {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
+              color: Color.fromARGB(255, 200, 200, 200),
               blurRadius: 5,
               spreadRadius: 2,
               offset: Offset(0, 3),

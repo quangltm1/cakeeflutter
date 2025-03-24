@@ -198,7 +198,7 @@ class _DonHangAdminState extends State<DonHangAdmin>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                      "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
+                      "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])}VNĐ"),
                   Text(
                       "Ngày đặt: ${bill["receiveDate"] != null ? DateFormat('dd/MM/yyyy').format(DateTime.tryParse(bill["receiveDate"]) ?? DateTime.now()) : "Chưa có"}"),
                   Text(
@@ -285,7 +285,7 @@ class _DonHangAdminState extends State<DonHangAdmin>
               Text("Số lượng: ${bill["quantity"]}"),
               Text("Nội dung: ${bill["cakeContent"]}"),
               Text(
-                  "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])} VNĐ"),
+                  "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: '').format(bill["total"])}VNĐ"),
               Text(
                   "Giao hàng: ${bill["deliveryDate"] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(bill["deliveryDate"])) : "Chưa có"}"),
               Text("Trạng thái: ${_getStatusText(bill["status"])}"),

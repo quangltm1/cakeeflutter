@@ -144,51 +144,61 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                children: [
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Xin chào, $fullName',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Cakee',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                    'Xin chào, $fullName',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    ),
+                    Text(
+                    'Cakee',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                    ),
+                    ),
+                  ],
                   ),
                 ),
                 SizedBox(height: 16),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    height: 150,
-                    child: GridView.count(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
+                  child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    int crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
+                    return GridView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                       childAspectRatio: 2.5,
-                      children: [
-                        _buildStatCard(
-                            'Đơn hoàn thành', '$completedOrders', Colors.green),
-                        _buildStatCard('Đơn mới', '$newOrders', Colors.orange),
-                        _buildStatCard(
-                            'Đơn chưa xong', '$pendingOrders', Colors.blue),
-                        _buildStatCard('Doanh thu', '0 đ', Colors.red),
-                      ],
                     ),
+                    itemCount: 4,
+                    itemBuilder: (context, index) {
+                      final stats = [
+                      {'title': 'Đơn hoàn thành', 'value': '$completedOrders'},
+                      {'title': 'Đơn mới', 'value': '$newOrders'},
+                      {'title': 'Đơn chưa xong', 'value': '$pendingOrders'},
+                      {'title': 'Doanh thu', 'value': '0 đ'},
+                      ];
+                      return _buildStatCard(
+                      stats[index]['title']!,
+                      stats[index]['value']!,
+                      index == 3 ? Colors.green : Colors.blue,
+                      );
+                    },
+                    );
+                  },
                   ),
                 ),
               ],
@@ -197,34 +207,36 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
           SizedBox(height: 16),
 
           
-          // Danh sách chức năng
-          Padding(
+            // Danh sách chức năng
+            Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              height: 250,
-              child: GridView.builder(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+              int crossAxisCount = constraints.maxWidth > 600 ? 4 : 3;
+              return GridView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.9,
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.9,
                 ),
                 itemCount: features.length,
                 itemBuilder: (context, index) {
-                  return _buildFeatureButton(
-                    features[index]["title"]!,
-                    features[index]["icon"]!,
-                    features[index]["color"]!,
-                    () {
-                      Navigator.pushNamed(context, features[index]["route"]!);
-                    },
-                  );
+                return _buildFeatureButton(
+                  features[index]["title"] ?? "Unknown",
+                  features[index]["icon"] ?? Icons.error,
+                  features[index]["color"] ?? Colors.grey,
+                  () {
+                  Navigator.pushNamed(context, features[index]["route"] ?? "/");
+                  },
+                );
                 },
-              ),
+              );
+              },
             ),
-          ),
+            ),
           SizedBox(height: 20),
         ],
       ),
@@ -240,7 +252,6 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(width: 10),
             Expanded(
               // Để tránh lỗi tràn ngang
               child: Column(
@@ -269,7 +280,7 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withAlpha((0.15 * 255).toInt()),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -281,7 +292,7 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
           children: [
             CircleAvatar(
               radius: 26,
-              backgroundColor: color.withOpacity(0.2),
+              backgroundColor: color.withAlpha((0.2 * 255).toInt()),
               child: Icon(icon, size: 28, color: color),
             ),
             SizedBox(height: 8),
