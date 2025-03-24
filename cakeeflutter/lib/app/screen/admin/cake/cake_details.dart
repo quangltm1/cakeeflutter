@@ -92,7 +92,7 @@ class _EditCakeScreenState extends State<EditCakeScreen> {
       Map<String, dynamic> cakeData = {
         "cakeName": _nameController.text.trim(),
         "cakeDescription": _descriptionController.text.trim(),
-        "cakePrice": double.tryParse(_priceController.text.trim()) ?? 0.0,
+        "cakePrice": double.tryParse(_priceController.text.trim().replaceAll('.', '').replaceAll(' VND', '')) ?? 0,
         "cakeQuantity": int.tryParse(_stockController.text.trim()) ?? 0,
         "cakeImage": _imageController.text.trim(),
         "cakeCategoryId": _selectedCategoryId ?? "",

@@ -69,7 +69,7 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
             if (_startDate != null && _endDate != null) {
               DateTime adjustedEndDate = _endDate!.add(Duration(days: 1)); // ✅ Cộng thêm 1 ngày
 
-              if (billDate.isBefore(_startDate!) || billDate.isAfter(adjustedEndDate)) {
+              if (billDate.isBefore(_startDate!) || billDate.isAtSameMomentAs(adjustedEndDate)) {
                 continue;
               }
             }
@@ -175,7 +175,7 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Expanded(child: _buildStatCard("📊 Doanh Thu", "$_totalRevenue VNĐ", Colors.green)),
+          Expanded(child: _buildStatCard("📊 Doanh Thu", NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(_totalRevenue), Colors.green)),
           SizedBox(width: 10),
           Expanded(child: _buildStatCard("🎂 Đã Bán", "$_totalCakesSold cái", Colors.orange)),
         ],
@@ -217,7 +217,7 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
           child: ListTile(
             title: Text("🎂 Bánh: ${bill["cakeName"]}"),
             subtitle: Text("📅 Ngày giao: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(bill["deliveryDate"]))}\n"
-                "💰 Tổng tiền: ${bill["total"]} VNĐ\n"
+                "💰 Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(bill["total"])}\n"
                 "📦 Số lượng: ${bill["quantity"]} cái"),
             trailing: Icon(Icons.check_circle, color: Colors.green),
           ),

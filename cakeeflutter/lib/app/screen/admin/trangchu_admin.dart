@@ -1,6 +1,7 @@
 import 'package:cakeeflutter/app/core/base_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cakeeflutter/app/model/user.dart';
 
@@ -10,6 +11,12 @@ class TrangChuAdmin extends StatefulWidget {
 }
 
 class _TrangChuAdminState extends State<TrangChuAdmin> {
+  int _totalRevenue = 0;
+  bool _isLoading = true;
+
+  DateTime? _startDate; // ✅ Thêm biến _startDate
+  DateTime? _endDate;   // ✅ Thêm biến _endDate
+
   bool isLoading =
       true; // ✅ Biến trạng thái để kiểm tra có đang tải dữ liệu không
   String fullName = "Đang tải...";
@@ -59,20 +66,40 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
   try {
     var response = await Dio().get(
       "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill",
-      cancelToken: _cancelToken, // 🔥 Thêm CancelToken vào request
+      cancelToken: _cancelToken,
     );
 
     if (response.statusCode == 200 && mounted) {
       List<dynamic> bills = response.data;
-      List<dynamic> shopBills =
-          bills.where((bill) => bill["billShopId"] == shopId).toList();
+
+      // Lọc các bill hoàn thành trong tháng hiện tại
+      DateTime now = DateTime.now();
+      List<dynamic> shopBills = bills.where((bill) {
+        DateTime billDate = DateTime.parse(bill["deliveryDate"]);
+        return bill["billShopId"] == shopId &&
+               bill["status"] == 0 && // Chỉ lấy bill hoàn thành
+               billDate.year == now.year &&
+               billDate.month == now.month;
+      }).toList();
+
+      double totalRevenue = 0;
+
+      // Tính tổng doanh thu từ các bill hoàn thành
+      for (var bill in shopBills) {
+        try {
+          totalRevenue += (bill["total"] as num).toDouble(); // Đảm bảo ép kiểu chính xác
+        } catch (e) {
+          print("❌ Lỗi khi đọc tổng tiền từ bill: $e");
+        }
+      }
 
       if (mounted) {
         setState(() {
           allBills = shopBills;
-          completedOrders = shopBills.where((bill) => bill["status"] == 0).length;
-          pendingOrders = shopBills.where((bill) => bill["status"] == 2 || bill["status"] == 3).length;
-          newOrders = shopBills.where((bill) => bill["status"] == 1).length;
+          completedOrders = shopBills.length;
+          pendingOrders = bills.where((bill) => bill["status"] == 2 || bill["status"] == 3).length;
+          newOrders = bills.where((bill) => bill["status"] == 1).length;
+          _totalRevenue = totalRevenue.toInt(); // Ép kiểu về int để hiển thị dễ dàng
           isLoading = false;
         });
       }
@@ -90,6 +117,8 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
     }
   }
 }
+
+
 
 
   Future<void> _fetchUser() async {
@@ -111,6 +140,68 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
     }
   }
 }
+
+// /// 🛠 **Hàm gọi API lấy doanh thu và số lượng bánh đã bán**
+// Future<void> _fetchRevenueAndOrdersData(String shopId) async {
+//   if (!mounted) return;
+
+//   setState(() {
+//     _isLoading = true;
+//   });
+
+//   try {
+//     var response = await Dio().get(
+//       "https://fitting-solely-fawn.ngrok-free.app/api/Bill/GetAllBill",
+//     );
+
+//     if (response.statusCode == 200) {
+//       List<dynamic> bills = response.data;
+//       double totalRevenue = 0.0;
+//       int totalCakesSold = 0;
+//       int completedOrders = 0;
+//       int pendingOrders = 0;
+//       int newOrders = 0;
+
+//       DateTime now = DateTime.now();
+
+//       // Lọc các bill của tháng hiện tại và shop hiện tại
+//       List<dynamic> filteredBills = bills.where((bill) {
+//         DateTime billDate = DateTime.parse(bill["deliveryDate"]);
+//         bool isCurrentMonth = billDate.year == now.year && billDate.month == now.month;
+
+//         return bill["billShopId"] == shopId && isCurrentMonth;
+//       }).toList();
+
+//       for (var bill in filteredBills) {
+//         int status = bill["status"] as int;
+
+//         if (status == 0) {
+//           completedOrders++;
+//           totalRevenue += (bill["total"] as num).toDouble();
+//           totalCakesSold += (bill["quantity"] as num).toInt();
+//         } else if (status == 1) {
+//           newOrders++;
+//         } else if (status == 2 || status == 3) {
+//           pendingOrders++;
+//         }
+//       }
+
+//       setState(() {
+//         _totalRevenue = totalRevenue.toInt();
+//         this.completedOrders = completedOrders;
+//         this.pendingOrders = pendingOrders;
+//         this.newOrders = newOrders;
+//         _isLoading = false;
+//       });
+//     }
+//   } catch (e) {
+//     print("❌ Lỗi khi lấy dữ liệu: $e");
+//     setState(() {
+//       _isLoading = false;
+//     });
+//   }
+// }
+
 
 
   @override
@@ -189,7 +280,7 @@ class _TrangChuAdminState extends State<TrangChuAdmin> {
                       {'title': 'Đơn hoàn thành', 'value': '$completedOrders'},
                       {'title': 'Đơn mới', 'value': '$newOrders'},
                       {'title': 'Đơn chưa xong', 'value': '$pendingOrders'},
-                      {'title': 'Doanh thu', 'value': '0 đ'},
+                      {'title': 'Doanh thu', 'value': NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(_totalRevenue)},
                       ];
                       return _buildStatCard(
                       stats[index]['title']!,

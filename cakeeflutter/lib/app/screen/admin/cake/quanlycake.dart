@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:cakeeflutter/app/model/cake.dart';
 import 'package:cakeeflutter/main.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/base_service.dart';
 import 'cake_details.dart';
@@ -179,7 +180,7 @@ class _CakeListScreenState extends State<QuanLyCake> with RouteAware {
                                   ),
                                   Spacer(),
                                   Text(
-                                    "${cake.cakePrice.toStringAsFixed(0)} VND",
+                                    NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(cake.cakePrice),
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
