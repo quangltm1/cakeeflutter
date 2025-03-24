@@ -4,6 +4,7 @@ import 'package:cakeeflutter/app/screen/user/checkout_nologin_page.dart';
 import 'package:cakeeflutter/app/screen/user/checkout_page.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -76,7 +77,8 @@ Future<void> _fetchCakeSold() async {
                         Divider(),
                         SizedBox(height: 5),
                         Text(
-                          "${widget.product['cakePrice'] ?? '0'} VNĐ",
+                          "${NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(widget.product['cakePrice'] ?? '0')}",
+                          
                           style: TextStyle(color: Colors.red, fontSize: 22, fontWeight: FontWeight.bold),
                         ),
                         SizedBox(height: 10),

@@ -136,7 +136,7 @@ class _DonHangPageState extends State<DonHangPage>
             title: Text("Bánh: ${order.cakeName}"),
             subtitle: Text(
               "Ngày giao: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(order.deliveryDate))}\n"
-              "Tổng tiền: ${NumberFormat('#,###').format(order.total)} VNĐ\n"
+              "Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(order.total)}\n"
               "Số lượng: ${order.quantity}",
             ),
             trailing: Text(
