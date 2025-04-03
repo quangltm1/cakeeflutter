@@ -102,6 +102,7 @@ class _DoanhthuAdminState extends State<DoanhthuAdmin> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Doanh Thu', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Color(0xFFFFD900),

@@ -136,6 +136,7 @@ class _DonHangAdminState extends State<DonHangAdmin>
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text("Quản lý đơn hàng"),
         centerTitle: true,
         backgroundColor: Color(0xFFFFD900),

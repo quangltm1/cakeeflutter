@@ -6,6 +6,7 @@ class CaiDatAdminScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Cài Đặt', style: TextStyle(), textAlign: TextAlign.center),
         centerTitle: true,
         elevation: 0,

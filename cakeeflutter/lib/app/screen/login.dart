@@ -20,47 +20,46 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isPasswordVisible = false; // Thêm trạng thái hiển thị mật khẩu
 
   Future<void> login() async {
-  setState(() => isLoading = true);
+    setState(() => isLoading = true);
 
-  try {
-    String? token = await APIRepository().login(
-      accountController.text,
-      passwordController.text,
-    );
+    try {
+      String? token = await APIRepository().login(
+        accountController.text,
+        passwordController.text,
+      );
 
-    if (token != null) {
-      var user = await APIRepository().current(token);
-      if (user != null) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-        await prefs.setString('userId', user.id.toString()); // ⚡ Lưu userId
-        await prefs.setInt('role', int.tryParse(user.role.toString()) ?? 0);
+      if (token != null) {
+        var user = await APIRepository().current(token);
+        if (user != null) {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', token);
+          await prefs.setString('userId', user.id.toString()); // ⚡ Lưu userId
+          await prefs.setInt('role', int.tryParse(user.role.toString()) ?? 0);
 
-        print("✅ Lưu vào SharedPreferences: UserID = ${user.id}, Token = $token");
+          print(
+              "✅ Lưu vào SharedPreferences: UserID = ${user.id}, Token = $token");
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => user.role == 1
-                ? const AdminHomeScreen()
-                : const UserHomeScreen(),
-          ),
-        );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => user.role == 1
+                  ? const AdminHomeScreen()
+                  : const UserHomeScreen(),
+            ),
+            (route) => false, // Xóa tất cả các route trước đó
+          );
+        } else {
+          showError("Không thể lấy thông tin người dùng");
+        }
       } else {
-        showError("Không thể lấy thông tin người dùng");
+        showError("Sai tên đăng nhập hoặc mật khẩu");
       }
-    } else {
-      showError("Sai tên đăng nhập hoặc mật khẩu");
+    } catch (e) {
+      showError("Đã xảy ra lỗi, vui lòng thử lại");
     }
-  } catch (e) {
-    showError("Đã xảy ra lỗi, vui lòng thử lại");
+
+    setState(() => isLoading = false);
   }
-
-  setState(() => isLoading = false);
-}
-
-
-
 
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

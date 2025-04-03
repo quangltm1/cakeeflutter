@@ -73,6 +73,7 @@ class _DonHangPageState extends State<DonHangPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text("Đơn hàng của tôi"),
         centerTitle: true,
         backgroundColor: Color(0xFFFFD900),

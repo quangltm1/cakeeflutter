@@ -30,6 +30,7 @@ class CartPageState extends State<CartPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text("Giỏ hàng (${cartProvider.cart?.items.length ?? 0})"),
         centerTitle: true,
         backgroundColor: Color(0xFFFFD900),
